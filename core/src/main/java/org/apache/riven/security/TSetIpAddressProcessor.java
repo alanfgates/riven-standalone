@@ -21,7 +21,7 @@ package org.apache.riven.security;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 
-import org.apache.riven.impl.HiveMetaStore.HMSHandler;
+import org.apache.riven.impl.MetaStoreServer.HMSHandler;
 import org.apache.riven.api.ThriftHiveMetastore;
 import org.apache.riven.api.ThriftHiveMetastore.Iface;
 import org.apache.thrift.TException;

@@ -59,37 +59,37 @@ public class HMSMetricsListener extends MetaStoreEventListener {
 
   @Override
   public void onCreateDatabase(CreateDatabaseEvent dbEvent) throws MetaException {
-    HiveMetaStore.HMSHandler.databaseCount.incrementAndGet();
+    MetaStoreServer.HMSHandler.databaseCount.incrementAndGet();
     createdDatabases.inc();
   }
 
   @Override
   public void onDropDatabase(DropDatabaseEvent dbEvent) throws MetaException {
-    HiveMetaStore.HMSHandler.databaseCount.decrementAndGet();
+    MetaStoreServer.HMSHandler.databaseCount.decrementAndGet();
     deletedDatabases.inc();
   }
 
   @Override
   public void onCreateTable(CreateTableEvent tableEvent) throws MetaException {
-    HiveMetaStore.HMSHandler.tableCount.incrementAndGet();
+    MetaStoreServer.HMSHandler.tableCount.incrementAndGet();
     createdTables.inc();
   }
 
   @Override
   public void onDropTable(DropTableEvent tableEvent) throws MetaException {
-    HiveMetaStore.HMSHandler.tableCount.decrementAndGet();
+    MetaStoreServer.HMSHandler.tableCount.decrementAndGet();
     deletedTables.inc();
   }
 
   @Override
   public void onDropPartition(DropPartitionEvent partitionEvent) throws MetaException {
-    HiveMetaStore.HMSHandler.partCount.decrementAndGet();
+    MetaStoreServer.HMSHandler.partCount.decrementAndGet();
     deletedParts.inc();
   }
 
   @Override
   public void onAddPartition(AddPartitionEvent partitionEvent) throws MetaException {
-    HiveMetaStore.HMSHandler.partCount.incrementAndGet();
+    MetaStoreServer.HMSHandler.partCount.incrementAndGet();
     createdParts.inc();
   }
 

@@ -20,7 +20,7 @@ package org.apache.riven.conf;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.riven.client.DefaultMetaStoreFilterHookImpl;
-import org.apache.riven.impl.HiveMetaStoreFsImpl;
+import org.apache.riven.impl.MetaStoreFsImpl;
 import org.apache.riven.impl.MetaStoreSchemaInfo;
 import org.apache.riven.impl.ObjectStore;
 import org.apache.riven.txn.CompactionTxnHandler;
@@ -391,6 +391,9 @@ public class MetastoreConf {
         "The default partition name in case the dynamic partition column value is null/empty string or any other values that cannot be escaped. \n" +
             "This value must not contain any special character used in HDFS URI (e.g., ':', '%', '/' etc). \n" +
             "The user has to be aware that the dynamic partition value should not contain this value to avoid confusions."),
+    DETACH_ALL_ON_COMMIT("javax.jdo.option.DetachAllOnCommit",
+        "javax.jdo.option.DetachAllOnCommit", true,
+        "Detaches all objects from session so that they can be used after transaction is committed"),
     DIRECT_SQL_MAX_ELEMENTS_IN_CLAUSE("metastore.direct.sql.max.elements.in.clause",
         "hive.direct.sql.max.elements.in.clause", 1000,
         "The maximum number of values in a IN clause. Once exceeded, it will be broken into\n" +
@@ -435,7 +438,7 @@ public class MetastoreConf {
         "Metastore hook class for filtering the metadata read results. If hive.security.authorization.manager"
             + "is set to instance of HiveAuthorizerFactory, then this value is ignored."),
     FS_HANDLER_CLS("metastore.fs.handler.class", "hive.metastore.fs.handler.class",
-        HiveMetaStoreFsImpl.class.getName(), ""),
+        MetaStoreFsImpl.class.getName(), ""),
     FS_HANDLER_THREADS_COUNT("metastore.fshandler.threads", "hive.metastore.fshandler.threads", 15,
         "Number of threads to be allocated for metastore handler for fs operations."),
     HMSHANDLERATTEMPTS("metastore.hmshandler.retry.attempts", "hive.hmshandler.retry.attempts", 10,
@@ -481,6 +484,10 @@ public class MetastoreConf {
             "If the property is not set, then logging will be initialized using hive-log4j2.properties found on the classpath.\n" +
             "If the property is set, the value must be a valid URI (java.net.URI, e.g. \"file:///tmp/my-logging.xml\"), \n" +
             "which you can then extract a URL from and pass to PropertyConfigurator.configure(URL)."),
+    MANAGER_FACTORY_CLASS("javax.jdo.PersistenceManagerFactoryClass",
+        "javax.jdo.PersistenceManagerFactoryClass",
+        "org.datanucleus.api.jdo.JDOPersistenceManagerFactory",
+        "class implementing the jdo persistence"),
     METRICS_ENABLED("metastore.metrics.enabled", "hive.metastore.metrics.enabled", false,
         "Enable metrics on the metastore."),
     METRICS_JSON_FILE_INTERVAL("metastore.metrics.file.frequency",
@@ -493,6 +500,8 @@ public class MetastoreConf {
     METRICS_REPORTERS("metastore.metrics.reporters", NO_SUCH_KEY, "json,jmx",
         new Validator.StringSet("json", "jmx", "console", "hadoop"),
         "A comma separated list of metrics reporters to start"),
+    MULTITHREADED("javax.jdo.option.Multithreaded", "javax.jdo.option.Multithreaded", true,
+        "Set this to true if multiple threads access metastore through JDO concurrently."),
     ORM_RETRIEVE_MAPNULLS_AS_EMPTY_STRINGS("metastore.orm.retrieveMapNullsAsEmptyStrings",
         "hive.metastore.orm.retrieveMapNullsAsEmptyStrings",false,
         "Thrift does not support nulls in maps, so any nulls present in maps retrieved from ORM must " +
@@ -503,6 +512,9 @@ public class MetastoreConf {
         "Maximum number of open transactions. If \n" +
         "current open transactions reach this limit, future open transaction requests will be \n" +
         "rejected, until this number goes below the limit."),
+    NON_TRANSACTIONAL_READ("javax.jdo.option.NonTransactionalRead",
+        "javax.jdo.option.NonTransactionalRead", true,
+        "Reads outside of transactions"),
     PARTITION_NAME_WHITELIST_PATTERN("metastore.partition.name.whitelist.pattern",
         "hive.metastore.partition.name.whitelist.pattern", "",
         "Partition names will be checked against this regex pattern and rejected if not matched."),
@@ -842,7 +854,11 @@ public class MetastoreConf {
       ConfVars.CONNECTION_POOLING_TYPE,
       ConfVars.CONNECTURLKEY,
       ConfVars.CONNECTION_USER_NAME,
+      ConfVars.DETACH_ALL_ON_COMMIT,
       ConfVars.IDENTIFIER_FACTORY,
+      ConfVars.MANAGER_FACTORY_CLASS,
+      ConfVars.MULTITHREADED,
+      ConfVars.NON_TRANSACTIONAL_READ,
       ConfVars.PWD
   };
 
@@ -889,11 +905,9 @@ public class MetastoreConf {
     // There are some we need to set a system property for based on whatever value we have.  This
     // is because we are setting it up for a lower layer such as jdo.
     for (ConfVars var : onesWeNeedToSetPropertiesFor) {
-      if (conf.get(var.varname) != null) {
-        System.setProperty(var.varname, conf.get(var.varname, var.defaultVal.toString()));
-      } else if (conf.get(var.hiveName) != null) {
-        System.setProperty(var.varname, conf.get(var.hiveName, var.defaultVal.toString()));
-      }
+      LOG.debug("Setting property for " + var.varname + " to " + var.defaultVal.toString());
+      System.setProperty(var.varname, conf.get(var.varname, var.defaultVal.toString()));
+      System.setProperty(var.varname, conf.get(var.hiveName, var.defaultVal.toString()));
     }
 
     // If we are going to validate the schema, make sure we don't create it

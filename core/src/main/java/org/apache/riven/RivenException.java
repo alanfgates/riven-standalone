@@ -23,23 +23,23 @@ import org.apache.hadoop.classification.InterfaceStability;
 
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-public class HiveMetaException extends Exception {
+public class RivenException extends Exception {
 
-  public HiveMetaException() {
+  public RivenException() {
     // TODO Auto-generated constructor stub
   }
 
-  public HiveMetaException(String message) {
+  public RivenException(String message) {
     super(message);
     // TODO Auto-generated constructor stub
   }
 
-  public HiveMetaException(Throwable cause) {
+  public RivenException(Throwable cause) {
     super(cause);
     // TODO Auto-generated constructor stub
   }
 
-  public HiveMetaException(String message, Throwable cause) {
+  public RivenException(String message, Throwable cause) {
     super(message, cause);
     // TODO Auto-generated constructor stub
   }

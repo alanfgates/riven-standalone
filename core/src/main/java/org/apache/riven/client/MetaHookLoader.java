@@ -24,12 +24,12 @@ import org.apache.riven.api.MetaException;
 import org.apache.riven.api.Table;
 
 /**
- * HiveMetaHookLoader is responsible for loading a {@link HiveMetaHook}
+ * HiveMetaHookLoader is responsible for loading a {@link MetaHook}
  * for a given table.
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-public interface HiveMetaHookLoader {
+public interface MetaHookLoader {
   /**
    * Loads a hook for the specified table.
    *
@@ -37,7 +37,7 @@ public interface HiveMetaHookLoader {
    *
    * @return hook, or null if none registered
    */
-  HiveMetaHook getHook(Table tbl) throws MetaException;
+  MetaHook getHook(Table tbl) throws MetaException;
 }
 
 // End HiveMetaHookLoader.java

@@ -996,9 +996,9 @@
                 <mkdir dir="${test.warehouse.dir}" />
                 <mkdir dir="${test.conf.dir}" />
                 <!-- copies hive-site.xml so it can be modified -->
-                <!--<copy todir="${test.conf.dir}">
-                  <fileset dir="${basedir}/${hive.path.to.root}/data/conf/"/>
-                </copy>-->
+                <copy todir="${test.conf.dir}">
+                  <fileset dir="${basedir}/${riven.path.to.root}/data/conf/"/>
+                </copy>
               </target>
             </configuration>
           </execution>
@@ -1100,8 +1100,6 @@
             <LANG>en_US.UTF-8</LANG>
             <HADOOP_CLASSPATH>${test.conf.dir}:${basedir}/${riven.path.to.root}/conf</HADOOP_CLASSPATH>
             <HIVE_HADOOP_TEST_CLASSPATH>${test.riven.hadoop.classpath}</HIVE_HADOOP_TEST_CLASSPATH>
-            <SPARK_SUBMIT_CLASSPATH>${spark.home}/lib/spark-assembly-${spark.version}-hadoop2.4.0.jar:${test.riven.hadoop.classpath}</SPARK_SUBMIT_CLASSPATH>
-            <SPARK_OSX_TEST_OPTS>-Dorg.xerial.snappy.tempdir=/tmp -Dorg.xerial.snappy.lib.name=libsnappyjava.jnilib</SPARK_OSX_TEST_OPTS>
             <PATH>${env.PATH}${test.extra.path}</PATH>
           </environmentVariables>
           <systemPropertyVariables>
@@ -1124,7 +1122,6 @@
             <log4j.debug>true</log4j.debug>
             <!-- don't diry up /tmp -->
             <java.io.tmpdir>${test.tmp.dir}</java.io.tmpdir>
-            <spark.home>${spark.home}</spark.home>
             <!-- Hadoop's minidfs class uses this -->
             <test.build.data>${test.tmp.dir}</test.build.data>
             <!-- required by QTestUtil -->
@@ -1139,12 +1136,9 @@
             <!-- EnforceReadOnlyTables hook and QTestUtil -->
             <test.src.tables>src,src1,srcbucket,srcbucket2,src_json,src_thrift,src_sequencefile,srcpart,alltypesorc,src_hbase,cbo_t1,cbo_t2,cbo_t3,src_cbo,part,lineitem</test.src.tables>
             <java.security.krb5.conf>${test.conf.dir}/krb5.conf</java.security.krb5.conf>
-            <!-- Required by spark to work around SPARK-14958 -->
             <antlr.version>${antlr.version}</antlr.version>
-            <qfile>${qfile}</qfile>
             <initScript>${initScript}</initScript>
             <clustermode>${clustermode}</clustermode>
-            <qfile_regex>${qfile_regex}</qfile_regex>
             <run_disabled>${run_disabled}</run_disabled>
           </systemPropertyVariables>
         </configuration>

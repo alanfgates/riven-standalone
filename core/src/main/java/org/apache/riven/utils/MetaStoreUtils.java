@@ -41,7 +41,7 @@ import org.apache.riven.api.StorageDescriptor;
 import org.apache.riven.api.Table;
 import org.apache.riven.api.metastoreConstants;
 import org.apache.riven.conf.MetastoreConf;
-import org.apache.riven.impl.HiveMetaStore;
+import org.apache.riven.impl.MetaStoreServer;
 import org.apache.riven.impl.Warehouse;
 import org.apache.riven.partition.spec.PartitionSpecProxy;
 import org.apache.riven.security.HadoopThriftAuthBridge;
@@ -61,8 +61,6 @@ import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -896,7 +894,7 @@ public class MetaStoreUtils {
       @Override
       public void run() {
         try {
-          HiveMetaStore.startMetaStore(port, bridge, finalHiveConf);
+          MetaStoreServer.startMetaStore(port, bridge, finalHiveConf);
         } catch (Throwable e) {
           MetaStoreUtils.LOG.error("Metastore Thrift Server threw an exception...",e);
         }

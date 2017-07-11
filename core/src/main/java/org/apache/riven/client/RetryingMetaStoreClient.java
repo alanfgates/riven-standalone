@@ -90,23 +90,23 @@ public class RetryingMetaStoreClient implements InvocationHandler {
 
   public static IMetaStoreClient getProxy(
       Configuration conf, boolean allowEmbedded) throws MetaException {
-    return getProxy(conf, new Class[]{Configuration.class, HiveMetaHookLoader.class, Boolean.class},
-        new Object[]{conf, null, allowEmbedded}, null, HiveMetaStoreClient.class.getName()
+    return getProxy(conf, new Class[]{Configuration.class, MetaHookLoader.class, Boolean.class},
+        new Object[]{conf, null, allowEmbedded}, null, MetaStoreClient.class.getName()
     );
   }
 
   @VisibleForTesting
-  public static IMetaStoreClient getProxy(Configuration conf, HiveMetaHookLoader hookLoader,
+  public static IMetaStoreClient getProxy(Configuration conf, MetaHookLoader hookLoader,
       String mscClassName) throws MetaException {
     return getProxy(conf, hookLoader, null, mscClassName, true);
   }
 
-  public static IMetaStoreClient getProxy(Configuration conf, HiveMetaHookLoader hookLoader,
+  public static IMetaStoreClient getProxy(Configuration conf, MetaHookLoader hookLoader,
       ConcurrentHashMap<String, Long> metaCallTimeMap, String mscClassName, boolean allowEmbedded)
           throws MetaException {
 
     return getProxy(conf,
-        new Class[] {Configuration.class, HiveMetaHookLoader.class, Boolean.class},
+        new Class[] {Configuration.class, MetaHookLoader.class, Boolean.class},
         new Object[] {conf, hookLoader, allowEmbedded},
         metaCallTimeMap,
         mscClassName

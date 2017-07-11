@@ -79,12 +79,12 @@ import org.apache.riven.conf.MetastoreConf.ConfVars;
 import org.apache.riven.listeners.events.EventCleanerTask;
 import org.apache.riven.metrics.JvmPauseMonitor;
 import org.apache.riven.security.HadoopThriftAuthBridge;
-import org.apache.riven.security.HiveDelegationTokenManager;
+import org.apache.riven.security.RivenDelegationTokenManager;
 import org.apache.riven.security.TSetIpAddressProcessor;
 import org.apache.riven.security.TUGIBasedProcessor;
 import org.apache.riven.security.TUGIContainingTransport;
 import org.apache.riven.stats.StatsSetupConst;
-import org.apache.riven.HiveMetaException;
+import org.apache.riven.RivenException;
 import org.apache.riven.MetaStoreThread;
 import org.apache.riven.PartitionExpressionProxy;
 import org.apache.riven.TableType;
@@ -175,8 +175,8 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 /**
  * TODO:pc remove application logic to a separate interface.
  */
-public class HiveMetaStore extends ThriftHiveMetastore {
-  public static final Logger LOG = LoggerFactory.getLogger(HiveMetaStore.class);
+public class MetaStoreServer extends ThriftHiveMetastore {
+  public static final Logger LOG = LoggerFactory.getLogger(MetaStoreServer.class);
   public static final String PARTITION_NUMBER_EXCEED_LIMIT_MSG =
       "Number of partitions scanned (=%d) on table '%s' exceeds limit (=%d). This is controlled on the metastore server by %s.";
   public static final String DEFAULT_DATABASE_NAME = "default";
@@ -201,7 +201,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
   public static final String ADMIN = "admin";
 
   private static HadoopThriftAuthBridge.Server saslServer;
-  private static HiveDelegationTokenManager delegationTokenManager;
+  private static RivenDelegationTokenManager delegationTokenManager;
   private static boolean useSasl;
 
   public static final String NO_FILTER_STRING = "";
@@ -235,7 +235,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
   }
 
   public static class HMSHandler extends FacebookBase implements IHMSHandler, ThreadLocalRawStore {
-    public static final Logger LOG = HiveMetaStore.LOG;
+    public static final Logger LOG = MetaStoreServer.LOG;
     // TODO Keeping the hiveConf for now as many things we call need it.  But over time it's use
     // should go to zero as we move pieces over.
     private final Configuration conf; // stores datastore (jpox) properties,
@@ -299,7 +299,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
             "ip=%s\t" + // remote IP
             "cmd=%s\t"; // command
     public static final Logger auditLog = LoggerFactory.getLogger(
-        HiveMetaStore.class.getName() + ".audit");
+        MetaStoreServer.class.getName() + ".audit");
     private static final ThreadLocal<Formatter> auditFormatter =
         new ThreadLocal<Formatter>() {
           @Override
@@ -5951,7 +5951,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       boolean success = false;
       Exception ex = null;
       try {
-        HiveMetaStore.cancelDelegationToken(token_str_form);
+        MetaStoreServer.cancelDelegationToken(token_str_form);
         success = true;
       } catch (IOException e) {
         ex = e;
@@ -5977,7 +5977,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       Long ret = null;
       Exception ex = null;
       try {
-        ret = HiveMetaStore.renewDelegationToken(token_str_form);
+        ret = MetaStoreServer.renewDelegationToken(token_str_form);
       } catch (IOException e) {
         ex = e;
         throw new MetaException(e.getMessage());
@@ -6005,7 +6005,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       Exception ex = null;
       try {
         ret =
-            HiveMetaStore.getDelegationToken(token_owner,
+            MetaStoreServer.getDelegationToken(token_owner,
                 renewer_kerberos_principal_name, getIPAddress());
       } catch (IOException e) {
         ex = e;
@@ -6935,7 +6935,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
   public static Iface newRetryingHMSHandler(String name, Configuration conf, boolean local)
       throws MetaException {
-    HMSHandler baseHandler = new HiveMetaStore.HMSHandler(name, conf, false);
+    HMSHandler baseHandler = new MetaStoreServer.HMSHandler(name, conf, false);
     return RetryingHMSHandler.getProxy(conf, baseHandler, local);
   }
 
@@ -7060,7 +7060,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         HMSHandler.LOG.warn(e.getMessage());
       }
     }
-    startupShutdownMessage(HiveMetaStore.class, args, LOG);
+    startupShutdownMessage(MetaStoreServer.class, args, LOG);
 
     try {
       String msg = "Starting hive metastore on port " + cli.port;
@@ -7183,7 +7183,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         protocolFactory = new TBinaryProtocol.Factory();
         inputProtoFactory = new TBinaryProtocol.Factory(true, true, maxMessageSize, maxMessageSize);
       }
-      HMSHandler baseHandler = new HiveMetaStore.HMSHandler("new db based metaserver", conf,
+      HMSHandler baseHandler = new MetaStoreServer.HMSHandler("new db based metaserver", conf,
           false);
       IHMSHandler handler = newRetryingHMSHandler(baseHandler, conf);
       TServerSocket serverSocket  = null;
@@ -7191,13 +7191,13 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       if (useSasl) {
         // we are in secure mode.
         if (useFramedTransport) {
-          throw new HiveMetaException("Framed transport is not supported with SASL enabled.");
+          throw new RivenException("Framed transport is not supported with SASL enabled.");
         }
         saslServer = bridge.createServer(
             MetastoreConf.getVar(conf, ConfVars.KERBEROS_KEYTAB_FILE),
             MetastoreConf.getVar(conf, ConfVars.KERBEROS_PRINCIPAL));
         // Start delegation token manager
-        delegationTokenManager = new HiveDelegationTokenManager();
+        delegationTokenManager = new RivenDelegationTokenManager();
         delegationTokenManager.startDelegationTokenSecretManager(conf, baseHandler,
             HadoopThriftAuthBridge.Server.ServerMode.METASTORE);
         saslServer.setSecretManager(delegationTokenManager.getSecretManager());

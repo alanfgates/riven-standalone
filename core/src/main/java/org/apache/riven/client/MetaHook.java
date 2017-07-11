@@ -35,7 +35,7 @@ import org.apache.riven.api.Table;
  */
 @InterfaceStability.Stable
 @InterfaceAudience.Public
-public interface HiveMetaHook {
+public interface MetaHook {
   /**
    * Called before a new table definition is added to the metastore
    * during CREATE TABLE.

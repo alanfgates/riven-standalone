@@ -29,7 +29,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.riven.api.MetaException;
 
-public class HiveMetaStoreFsImpl implements MetaStoreFS {
+public class MetaStoreFsImpl implements MetaStoreFS {
 
   public static final Logger LOG = LoggerFactory
       .getLogger("hive.metastore.hivemetastoreFsimpl");

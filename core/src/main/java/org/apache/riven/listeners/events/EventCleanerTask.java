@@ -22,7 +22,7 @@ import java.util.TimerTask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.riven.impl.HiveMetaStore.HMSHandler;
+import org.apache.riven.impl.MetaStoreServer.HMSHandler;
 import org.apache.riven.impl.RawStore;
 
 public class EventCleanerTask extends TimerTask{

@@ -21,7 +21,7 @@ package org.apache.riven.client;
 import org.apache.riven.api.MetaException;
 import org.apache.riven.api.Table;
 
-public abstract class DefaultHiveMetaHook implements HiveMetaHook {
+public abstract class DefaultMetaHook implements MetaHook {
   /**
    * Called after successfully after INSERT [OVERWRITE] statement is executed.
    * @param table table definition

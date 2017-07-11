@@ -18,7 +18,7 @@
 package org.apache.riven.impl;
 
 import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.riven.HiveMetaException;
+import org.apache.riven.RivenException;
 
 import java.util.List;
 
@@ -39,18 +39,18 @@ public interface IMetaStoreSchemaInfo {
    *
    * @param fromVersion
    * @return
-   * @throws HiveMetaException
+   * @throws RivenException
    */
-  List<String> getUpgradeScripts(String fromVersion) throws HiveMetaException;
+  List<String> getUpgradeScripts(String fromVersion) throws RivenException;
 
   /***
    * Get the name of the script to initialize the schema for given version
    *
    * @param toVersion Target version. If it's null, then the current server version is used
    * @return
-   * @throws HiveMetaException
+   * @throws RivenException
    */
-  String generateInitFileName(String toVersion) throws HiveMetaException;
+  String generateInitFileName(String toVersion) throws RivenException;
 
   /**
    * Find the directory of metastore scripts

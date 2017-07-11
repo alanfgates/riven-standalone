@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.riven.HiveMetaException;
+import org.apache.riven.RivenException;
 import org.apache.riven.utils.MetastoreVersionInfo;
 
 
@@ -51,12 +51,12 @@ public class MetaStoreSchemaInfo implements IMetaStoreSchemaInfo {
           "1.2.1", "1.2.0"
       );
 
-  public MetaStoreSchemaInfo(String hiveHome, String dbType) throws HiveMetaException {
+  public MetaStoreSchemaInfo(String hiveHome, String dbType) throws RivenException {
     this.hiveHome = hiveHome;
     this.dbType = dbType;
   }
 
-  private void loadAllUpgradeScripts(String dbType) throws HiveMetaException {
+  private void loadAllUpgradeScripts(String dbType) throws RivenException {
     // load upgrade order for the given dbType
     List<String> upgradeOrderList = new ArrayList<String>();
     String upgradeListFile = getMetaStoreScriptDir() + File.separator +
@@ -68,9 +68,9 @@ public class MetaStoreSchemaInfo implements IMetaStoreSchemaInfo {
         upgradeOrderList.add(currSchemaVersion.trim());
       }
     } catch (FileNotFoundException e) {
-      throw new HiveMetaException("File " + upgradeListFile + "not found ", e);
+      throw new RivenException("File " + upgradeListFile + "not found ", e);
     } catch (IOException e) {
-      throw new HiveMetaException("Error reading " + upgradeListFile, e);
+      throw new RivenException("Error reading " + upgradeListFile, e);
     }
     hiveSchemaVersions = upgradeOrderList.toArray(new String[0]);
   }
@@ -79,11 +79,11 @@ public class MetaStoreSchemaInfo implements IMetaStoreSchemaInfo {
    * Get the list of sql scripts required to upgrade from the give version to current
    * @param fromVersion
    * @return
-   * @throws HiveMetaException
+   * @throws RivenException
    */
   @Override
   public List<String> getUpgradeScripts(String fromVersion)
-      throws HiveMetaException {
+      throws RivenException {
     List <String> upgradeScriptList = new ArrayList<String>();
 
     // check if we are already at current schema level
@@ -99,7 +99,7 @@ public class MetaStoreSchemaInfo implements IMetaStoreSchemaInfo {
       }
     }
     if (firstScript == hiveSchemaVersions.length) {
-      throw new HiveMetaException("Unknown version specified for upgrade " +
+      throw new RivenException("Unknown version specified for upgrade " +
               fromVersion + " Metastore schema may be too old or newer");
     }
 
@@ -114,10 +114,10 @@ public class MetaStoreSchemaInfo implements IMetaStoreSchemaInfo {
    * Get the name of the script to initialize the schema for given version
    * @param toVersion Target version. If it's null, then the current server version is used
    * @return
-   * @throws HiveMetaException
+   * @throws RivenException
    */
   @Override
-  public String generateInitFileName(String toVersion) throws HiveMetaException {
+  public String generateInitFileName(String toVersion) throws RivenException {
     if (toVersion == null) {
       toVersion = getHiveSchemaVersion();
     }
@@ -126,7 +126,7 @@ public class MetaStoreSchemaInfo implements IMetaStoreSchemaInfo {
     // check if the file exists
     if (!(new File(getMetaStoreScriptDir() + File.separatorChar +
           initScriptName).exists())) {
-      throw new HiveMetaException("Unknown version specified for initialization: " + toVersion);
+      throw new RivenException("Unknown version specified for initialization: " + toVersion);
     }
     return initScriptName;
   }

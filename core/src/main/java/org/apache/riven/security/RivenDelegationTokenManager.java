@@ -34,7 +34,7 @@ import org.apache.hadoop.security.authorize.AuthorizationException;
 import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.util.ReflectionUtils;
 
-public class HiveDelegationTokenManager {
+public class RivenDelegationTokenManager {
 
   public static final String  DELEGATION_TOKEN_GC_INTERVAL =
       "hive.cluster.delegation.token.gc-interval";
@@ -71,7 +71,7 @@ public class HiveDelegationTokenManager {
 
   protected DelegationTokenSecretManager secretManager;
 
-  public HiveDelegationTokenManager() {
+  public RivenDelegationTokenManager() {
   }
 
   public DelegationTokenSecretManager getSecretManager() {

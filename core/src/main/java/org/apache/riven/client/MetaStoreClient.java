@@ -18,7 +18,7 @@
 
 package org.apache.riven.client;
 
-import static org.apache.riven.impl.HiveMetaStore.DEFAULT_DATABASE_NAME;
+import static org.apache.riven.impl.MetaStoreServer.DEFAULT_DATABASE_NAME;
 import static org.apache.riven.utils.MetaStoreUtils.isIndexTable;
 
 import java.io.IOException;
@@ -51,7 +51,7 @@ import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.riven.conf.MetastoreConf;
 import org.apache.riven.conf.MetastoreConf.ConfVars;
-import org.apache.riven.impl.HiveMetaStore;
+import org.apache.riven.impl.MetaStoreServer;
 import org.apache.riven.security.HadoopThriftAuthBridge;
 import org.apache.riven.txn.ValidTxnList;
 import org.apache.riven.TableType;
@@ -87,7 +87,7 @@ import com.google.common.collect.Lists;
  */
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
-public class HiveMetaStoreClient implements IMetaStoreClient {
+public class MetaStoreClient implements IMetaStoreClient {
   /**
    * Capabilities of the current client. If this client talks to a MetaStore server in a manner
    * implying the usage of some expanded features that require client-side support that this client
@@ -102,7 +102,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   private TTransport transport = null;
   private boolean isConnected = false;
   private URI metastoreUris[];
-  private final HiveMetaHookLoader hookLoader;
+  private final MetaHookLoader hookLoader;
   // Keep a copy of HiveConf so if Session conf changes, we may need to get a new HMS client.
   protected final Configuration conf;
   private String tokenStrForm;
@@ -121,11 +121,11 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   static final protected Logger LOG = LoggerFactory.getLogger("hive.metastore");
 
-  public HiveMetaStoreClient(Configuration conf) throws MetaException {
+  public MetaStoreClient(Configuration conf) throws MetaException {
     this(conf, null, true);
   }
 
-  public HiveMetaStoreClient(Configuration conf, HiveMetaHookLoader hookLoader, Boolean allowEmbedded)
+  public MetaStoreClient(Configuration conf, MetaHookLoader hookLoader, Boolean allowEmbedded)
     throws MetaException {
 
     this.hookLoader = hookLoader;
@@ -150,7 +150,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
       }
       // instantiate the metastore server handler directly instead of connecting
       // through the network
-      client = HiveMetaStore.newRetryingHMSHandler("hive client", this.conf, true);
+      client = MetaStoreServer.newRetryingHMSHandler("hive client", this.conf, true);
       isConnected = true;
       snapshotActiveConf();
       return;
@@ -706,7 +706,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   public void createTable(Table tbl, EnvironmentContext envContext) throws AlreadyExistsException,
       InvalidObjectException, MetaException, NoSuchObjectException, TException {
-    HiveMetaHook hook = getHook(tbl);
+    MetaHook hook = getHook(tbl);
     if (hook != null) {
       hook.preCreateTable(tbl);
     }
@@ -737,7 +737,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
     List<SQLNotNullConstraint> notNullConstraints)
         throws AlreadyExistsException, InvalidObjectException,
         MetaException, NoSuchObjectException, TException {
-    HiveMetaHook hook = getHook(tbl);
+    MetaHook hook = getHook(tbl);
     if (hook != null) {
       hook.preCreateTable(tbl);
     }
@@ -1065,7 +1065,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
     if (isIndexTable(tbl)) {
       throw new UnsupportedOperationException("Cannot drop index tables");
     }
-    HiveMetaHook hook = getHook(tbl);
+    MetaHook hook = getHook(tbl);
     if (hook != null) {
       hook.preDropTable(tbl);
     }
@@ -1774,7 +1774,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
         deleteData, envContext);
   }
 
-  private HiveMetaHook getHook(Table tbl) throws MetaException {
+  private MetaHook getHook(Table tbl) throws MetaException {
     if (hookLoader == null) {
       return null;
     }
@@ -2242,11 +2242,11 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   @Override
   public void insertTable(Table table, boolean overwrite) throws MetaException {
     boolean failed = true;
-    HiveMetaHook hook = getHook(table);
-    if (hook == null || !(hook instanceof DefaultHiveMetaHook)) {
+    MetaHook hook = getHook(table);
+    if (hook == null || !(hook instanceof DefaultMetaHook)) {
       return;
     }
-    DefaultHiveMetaHook hiveMetaHook = (DefaultHiveMetaHook) hook;
+    DefaultMetaHook hiveMetaHook = (DefaultMetaHook) hook;
     try {
       hiveMetaHook.commitInsertTable(table, overwrite);
       failed = false;
@@ -2303,7 +2303,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   public static IMetaStoreClient newSynchronizedClient(
       IMetaStoreClient client) {
     return (IMetaStoreClient) Proxy.newProxyInstance(
-      HiveMetaStoreClient.class.getClassLoader(),
+      MetaStoreClient.class.getClassLoader(),
       new Class [] { IMetaStoreClient.class },
       new SynchronizedHandler(client));
   }
