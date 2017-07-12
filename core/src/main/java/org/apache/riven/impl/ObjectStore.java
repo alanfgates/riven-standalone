@@ -478,15 +478,12 @@ public class ObjectStore implements RawStore, Configurable {
     Properties prop = new Properties();
     correctAutoStartMechanism(conf);
 
-    Iterator<Map.Entry<String, String>> iter = conf.iterator();
-    while (iter.hasNext()) {
-      Map.Entry<String, String> e = iter.next();
-      if (e.getKey().contains("datanucleus") || e.getKey().contains("jdo")) {
-        Object prevVal = prop.setProperty(e.getKey(), conf.get(e.getKey()));
-        if (LOG.isDebugEnabled() && MetastoreConf.isPrintable(e.getKey())) {
-          LOG.debug("Overriding " + e.getKey() + " value " + prevVal
-              + " from  jpox.properties with " + e.getValue());
-        }
+    for (ConfVars var : MetastoreConf.dataNucleusAndJdoConfs) {
+      String confVal = MetastoreConf.getAsString(conf, var);
+      Object prevVal = prop.setProperty(var.varname, confVal);
+      if (LOG.isDebugEnabled() && MetastoreConf.isPrintable(var.varname)) {
+        LOG.debug("Overriding " + var.varname + " value " + prevVal
+            + " from  jpox.properties with " + confVal);
       }
     }
     // Password may no longer be in the conf, use getPassword()
@@ -519,14 +516,16 @@ public class ObjectStore implements RawStore, Configurable {
    * @param conf
    */
   private static void correctAutoStartMechanism(Configuration conf) {
-    final String autoStartKey = "datanucleus.autoStartMechanismMode";
-    final String autoStartIgnore = "ignored";
-    String currentAutoStartVal = conf.get(autoStartKey);
-    if(currentAutoStartVal != null && !currentAutoStartVal.equalsIgnoreCase(autoStartIgnore)) {
-      LOG.warn(autoStartKey + " is set to unsupported value " + conf.get(autoStartKey) +
-          " . Setting it to value " + autoStartIgnore);
+    String autoStart = MetastoreConf.getVar(conf, ConfVars.DATANUCLEUS_AUTOSTART);
+    try {
+      ConfVars.DATANUCLEUS_AUTOSTART.validate(autoStart);
+    } catch (IllegalArgumentException e) {
+      LOG.warn(ConfVars.DATANUCLEUS_AUTOSTART.varname + " is set to unsupported value " +
+          autoStart + ". Setting it to value " +
+          ConfVars.DATANUCLEUS_AUTOSTART.defaultVal.toString());
+      MetastoreConf.setVar(conf, ConfVars.DATANUCLEUS_AUTOSTART,
+          ConfVars.DATANUCLEUS_AUTOSTART.defaultVal.toString());
     }
-    conf.set(autoStartKey, autoStartIgnore);
   }
 
   private static synchronized PersistenceManagerFactory getPMF() {

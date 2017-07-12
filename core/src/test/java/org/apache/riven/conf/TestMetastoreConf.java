@@ -24,6 +24,8 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -36,8 +38,17 @@ import java.util.concurrent.TimeUnit;
 
 public class TestMetastoreConf {
 
+  private static final Logger LOG = LoggerFactory.getLogger(TestMetastoreConf.class);
+
   private Configuration conf;
   private Random rand = new Random();
+
+  @After
+  public void unsetProperties() {
+    for (MetastoreConf.ConfVars var : MetastoreConf.dataNucleusAndJdoConfs) {
+      System.getProperties().remove(var.varname);
+    }
+  }
 
   static class TestClass1 implements Runnable {
     @Override
@@ -118,12 +129,17 @@ public class TestMetastoreConf {
         MetastoreConf.getClass(conf, ConfVars.CLASS_TEST_ENTRY, TestClass1.class, Runnable.class));
     Assert.assertEquals("defaultval", MetastoreConf.get(conf, ConfVars.STR_TEST_ENTRY.varname));
     Assert.assertEquals("defaultval", MetastoreConf.get(conf, ConfVars.STR_TEST_ENTRY.hiveName));
+    Assert.assertEquals("defaultval", MetastoreConf.getAsString(conf, ConfVars.STR_TEST_ENTRY));
+    Assert.assertEquals("42", MetastoreConf.getAsString(conf, ConfVars.LONG_TEST_ENTRY));
+    Assert.assertEquals("3.141592654", MetastoreConf.getAsString(conf, ConfVars.DOUBLE_TEST_ENTRY));
+    Assert.assertEquals("true", MetastoreConf.getAsString(conf, ConfVars.BOOLEAN_TEST_ENTRY));
   }
 
   @Test
   public void readMetastoreSiteWithMetastoreConfDir() throws IOException {
     createConfFile("metastore-site.xml", false, "METASTORE_CONF_DIR", instaMap(
         "test.str", "notthedefault",
+        "test.long", "37",
         "test.double", "1.8",
         "test.bool", "false",
         "test.time", "30s",
@@ -132,6 +148,8 @@ public class TestMetastoreConf {
     ));
     conf = MetastoreConf.newMetastoreConf();
     Assert.assertEquals("notthedefault", MetastoreConf.getVar(conf, ConfVars.STR_TEST_ENTRY));
+    Assert.assertEquals(37L, MetastoreConf.getLongVar(conf, ConfVars.LONG_TEST_ENTRY));
+    Assert.assertEquals(37, MetastoreConf.getIntVar(conf, ConfVars.LONG_TEST_ENTRY));
     Assert.assertEquals(1.8, MetastoreConf.getDoubleVar(conf, ConfVars.DOUBLE_TEST_ENTRY),
         0.01);
     Assert.assertEquals(30, MetastoreConf.getTimeVar(conf, ConfVars.TIME_TEST_ENTRY,
@@ -146,6 +164,10 @@ public class TestMetastoreConf {
         MetastoreConf.getClass(conf, ConfVars.CLASS_TEST_ENTRY, TestClass1.class, Runnable.class));
     Assert.assertEquals("1.8", MetastoreConf.get(conf, ConfVars.DOUBLE_TEST_ENTRY.varname));
     Assert.assertEquals("1.8", MetastoreConf.get(conf, ConfVars.DOUBLE_TEST_ENTRY.hiveName));
+    Assert.assertEquals("notthedefault", MetastoreConf.getAsString(conf, ConfVars.STR_TEST_ENTRY));
+    Assert.assertEquals("37", MetastoreConf.getAsString(conf, ConfVars.LONG_TEST_ENTRY));
+    Assert.assertEquals("1.8", MetastoreConf.getAsString(conf, ConfVars.DOUBLE_TEST_ENTRY));
+    Assert.assertEquals("false", MetastoreConf.getAsString(conf, ConfVars.BOOLEAN_TEST_ENTRY));
   }
 
   @Test
@@ -159,7 +181,7 @@ public class TestMetastoreConf {
 
   // Not used until we are out of Hive because the Hive test setup puts hive-site.xml all over
   // the place and messes up our tests.
-  @Ignore
+  @Test
   public void readHiveSiteWithHiveConfDir() throws IOException {
     createConfFile("hive-site.xml", false, "HIVE_CONF_DIR", instaMap(
         "test.double", "1.8"
@@ -169,7 +191,7 @@ public class TestMetastoreConf {
         0.01);
   }
 
-  @Ignore
+  @Test
   public void readHiveSiteWithHiveHomeDir() throws IOException {
     createConfFile("hive-site.xml", true, "HIVE_HOME", instaMap(
         "test.bool", "false"
@@ -178,7 +200,7 @@ public class TestMetastoreConf {
     Assert.assertFalse(MetastoreConf.getBoolVar(conf, ConfVars.BOOLEAN_TEST_ENTRY));
   }
 
-  @Ignore
+  @Test
   public void readHiveMetastoreSiteWithHiveConfDir() throws IOException {
     createConfFile("hivemetastore-site.xml", false, "HIVE_CONF_DIR", instaMap(
         "test.double", "1.8"
@@ -188,7 +210,7 @@ public class TestMetastoreConf {
         0.01);
   }
 
-  @Ignore
+  @Test
   public void readHiveMetastoreSiteWithHiveHomeDir() throws IOException {
     createConfFile("hivemetastore-site.xml", true, "HIVE_HOME", instaMap(
         "test.bool", "false"
@@ -215,14 +237,6 @@ public class TestMetastoreConf {
         TimeUnit.SECONDS));
     Assert.assertEquals(300000,
         MetastoreConf.getTimeVar(conf, ConfVars.TIME_TEST_ENTRY, TimeUnit.MILLISECONDS));
-  }
-
-  @Test
-  public void checkSysPropertiesSet() {
-    conf = MetastoreConf.newMetastoreConf();
-    for (MetastoreConf.ConfVars var : MetastoreConf.onesWeNeedToSetPropertiesFor) {
-      Assert.assertEquals(System.getProperty(var.varname), conf.get(var.varname));
-    }
   }
 
   @Test
@@ -260,7 +274,8 @@ public class TestMetastoreConf {
     Assert.assertEquals("hivedefault", MetastoreConf.getVar(conf, ConfVars.STR_TEST_ENTRY));
     Assert.assertEquals(1.9, MetastoreConf.getDoubleVar(conf, ConfVars.DOUBLE_TEST_ENTRY),
         0.01);
-    Assert.assertEquals(89, MetastoreConf.getLongVar(conf, ConfVars.LONG_TEST_ENTRY));
+    Assert.assertEquals(89L, MetastoreConf.getLongVar(conf, ConfVars.LONG_TEST_ENTRY));
+    Assert.assertEquals(89, MetastoreConf.getIntVar(conf, ConfVars.LONG_TEST_ENTRY));
     Assert.assertEquals(3, MetastoreConf.getTimeVar(conf, ConfVars.TIME_TEST_ENTRY,
         TimeUnit.SECONDS));
     Assert.assertEquals(3000,
@@ -275,6 +290,10 @@ public class TestMetastoreConf {
         MetastoreConf.getClass(conf, ConfVars.CLASS_TEST_ENTRY, TestClass1.class, Runnable.class));
     Assert.assertEquals("3s", MetastoreConf.get(conf, ConfVars.TIME_TEST_ENTRY.varname));
     Assert.assertEquals("3s", MetastoreConf.get(conf, ConfVars.TIME_TEST_ENTRY.hiveName));
+    Assert.assertEquals("hivedefault", MetastoreConf.getAsString(conf, ConfVars.STR_TEST_ENTRY));
+    Assert.assertEquals("89", MetastoreConf.getAsString(conf, ConfVars.LONG_TEST_ENTRY));
+    Assert.assertEquals("1.9", MetastoreConf.getAsString(conf, ConfVars.DOUBLE_TEST_ENTRY));
+    Assert.assertEquals("false", MetastoreConf.getAsString(conf, ConfVars.BOOLEAN_TEST_ENTRY));
   }
 
   @Test

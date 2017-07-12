@@ -45,7 +45,6 @@ import java.util.regex.Pattern;
 
 public class MetastoreConf {
 
-  // TODO for now this is a shell.  We'll fill it in as we move pieces over
   private static final Logger LOG = LoggerFactory.getLogger(MetastoreConf.class);
   private static final Pattern TIME_UNIT_SUFFIX = Pattern.compile("([0-9]+)([a-zA-Z]+)");
 
@@ -53,7 +52,6 @@ public class MetastoreConf {
   private static final String NO_SUCH_KEY = "no.such.key"; // Used in config definitions when
                                                            // there is no matching Hive or
                                                            // metastore key for a value
-  private static boolean loadMetastoreConfig = false;
   private static URL hiveDefaultURL = null;
   private static URL hiveSiteURL = null;
 
@@ -87,9 +85,6 @@ public class MetastoreConf {
   public static final MetastoreConf.ConfVars[] metaVars = {
       ConfVars.WAREHOUSE,
       ConfVars.THRIFT_URIS,
-      /*
-      ConfVars.REPLDIR,
-      */
       ConfVars.SERVER_PORT,
       ConfVars.THRIFT_CONNECTION_RETRIES,
       ConfVars.THRIFT_FAILURE_RETRIES,
@@ -102,42 +97,29 @@ public class MetastoreConf {
       ConfVars.SERVER_MIN_THREADS,
       ConfVars.SERVER_MAX_THREADS,
       ConfVars.TCP_KEEP_ALIVE,
-      /*
-      ConfVars.METASTORE_INT_ORIGINAL,
-      ConfVars.METASTORE_INT_ARCHIVED,
-      ConfVars.METASTORE_INT_EXTRACTED,
-      */
       ConfVars.KERBEROS_KEYTAB_FILE,
       ConfVars.KERBEROS_PRINCIPAL,
       ConfVars.USE_THRIFT_SASL,
       ConfVars.TOKEN_SIGNATURE,
       ConfVars.CACHE_PINOBJTYPES,
       ConfVars.CONNECTION_POOLING_TYPE,
-      /*
-      ConfVars.METASTORE_VALIDATE_TABLES,
-      ConfVars.METASTORE_DATANUCLEUS_INIT_COL_INFO,
-      ConfVars.METASTORE_VALIDATE_COLUMNS,
-      ConfVars.METASTORE_VALIDATE_CONSTRAINTS,
-      ConfVars.METASTORE_STORE_MANAGER_TYPE,
-      */
+      ConfVars.VALIDATE_TABLES,
+      ConfVars.DATANUCLEUS_INIT_COL_INFO,
+      ConfVars.VALIDATE_COLUMNS,
+      ConfVars.VALIDATE_CONSTRAINTS,
+      ConfVars.STORE_MANAGER_TYPE,
       ConfVars.AUTO_CREATE_ALL,
-      /*
-      ConfVars.METASTORE_TRANSACTION_ISOLATION,
-      ConfVars.METASTORE_CACHE_LEVEL2,
-      ConfVars.METASTORE_CACHE_LEVEL2_TYPE,
-      */
+      ConfVars.DATANUCLEUS_TRANSACTION_ISOLATION,
+      ConfVars.DATANUCLEUS_CACHE_LEVEL2,
+      ConfVars.DATANUCLEUS_CACHE_LEVEL2_TYPE,
       ConfVars.IDENTIFIER_FACTORY,
-      /*
-      ConfVars.METASTORE_PLUGIN_REGISTRY_BUNDLE_CHECK,
-      */
+      ConfVars.DATANUCLEUS_PLUGIN_REGISTRY_BUNDLE_CHECK,
       ConfVars.AUTHORIZATION_STORAGE_AUTH_CHECKS,
       ConfVars.BATCH_RETRIEVE_MAX,
       ConfVars.EVENT_LISTENERS,
       ConfVars.TRANSACTIONAL_EVENT_LISTENERS,
-      /*
-      ConfVars.METASTORE_EVENT_CLEAN_FREQ,
-      ConfVars.METASTORE_EVENT_EXPIRY_DURATION,
-      */
+      ConfVars.EVENT_CLEAN_FREQ,
+      ConfVars.EVENT_EXPIRY_DURATION,
       ConfVars.EVENT_MESSAGE_FACTORY,
       ConfVars.FILTER_HOOK,
       ConfVars.RAW_STORE_IMPL,
@@ -151,19 +133,9 @@ public class MetastoreConf {
       ConfVars.HMSHANDLERFORCERELOADCONF,
       ConfVars.PARTITION_NAME_WHITELIST_PATTERN,
       ConfVars.ORM_RETRIEVE_MAPNULLS_AS_EMPTY_STRINGS,
-      /*
-      ConfVars.METASTORE_DISALLOW_INCOMPATIBLE_COL_TYPE_CHANGES,
-      */
       ConfVars.USERS_IN_ADMIN_ROLE,
-      /*
-      ConfVars.HIVE_AUTHORIZATION_MANAGER,
       ConfVars.HIVE_TXN_MANAGER,
-      */
       ConfVars.TXN_TIMEOUT,
-      /*
-      ConfVars.HIVE_TXN_OPERATIONAL_PROPERTIES,
-      ConfVars.HIVE_TXN_HEARTBEAT_THREADPOOL_SIZE,
-      */
       ConfVars.TXN_MAX_OPEN_BATCH,
       ConfVars.TXN_RETRYABLE_SQLEX_REGEX,
       ConfVars.STATS_NDV_TUNER,
@@ -199,42 +171,20 @@ public class MetastoreConf {
   }
 
   /**
-   * dbVars are the parameters can be set per database. If these
-   * parameters are set as a database property, when switching to that
-   * database, the HiveConf variable will be changed. The change of these
-   * parameters will effectively change the DFS and MapReduce clusters
-   * for different databases.
-   */
-  public static final ConfVars[] dbVars = {
-      /*
-      ConfVars.HADOOPBIN,
-      ConfVars.SCRATCHDIR
-      */
-      ConfVars.WAREHOUSE,
-  };
-
-  /**
    * Variables that we should never print the value of for security reasons.
    */
-  private static final ConfVars[] unprintables = {
-      ConfVars.PWD,
-      ConfVars.SSL_KEYSTORE_PASSWORD,
-      ConfVars.SSL_TRUSTSTORE_PASSWORD
-  };
+  private static final Set<String> unprintables = StringUtils.asSet(
+      ConfVars.PWD.varname,
+      ConfVars.PWD.hiveName,
+      ConfVars.SSL_KEYSTORE_PASSWORD.varname,
+      ConfVars.SSL_KEYSTORE_PASSWORD.hiveName,
+      ConfVars.SSL_TRUSTSTORE_PASSWORD.varname,
+      ConfVars.SSL_TRUSTSTORE_PASSWORD.hiveName
+  );
 
   public static ConfVars getMetaConf(String name) {
     return metaConfs.get(name);
   }
-
-  public static boolean isLoadMetastoreConfig() {
-    return loadMetastoreConfig;
-  }
-
-  public static void setLoadMetastoreConfig(boolean loadMetastoreConfig) {
-    MetastoreConf.loadMetastoreConfig = loadMetastoreConfig;
-  }
-
-
 
   public enum ConfVars {
     // alpha order, PLEASE!
@@ -383,6 +333,24 @@ public class MetastoreConf {
         "Username to use against metastore database"),
     COUNT_OPEN_TXNS_INTERVAL("metastore.count.open.txns.interval", "hive.count.open.txns.interval",
         1, TimeUnit.SECONDS, "Time in seconds between checks to count open transactions."),
+    DATANUCLEUS_AUTOSTART("datanucleus.autoStartMechanismMode",
+        "datanucleus.autoStartMechanismMode", "ignored", new Validator.StringSet("ignored"),
+        "Autostart mechanism for datanucleus.  Currently ignored is the only option supported."),
+    DATANUCLEUS_CACHE_LEVEL2("datanucleus.cache.level2", "datanucleus.cache.level2", false,
+        "Use a level 2 cache. Turn this off if metadata is changed independently of Hive metastore server"),
+    DATANUCLEUS_CACHE_LEVEL2_TYPE("datanucleus.cache.level2.type",
+        "datanucleus.cache.level2.type", "none", ""),
+    DATANUCLEUS_INIT_COL_INFO("datanucleus.rdbms.initializeColumnInfo",
+        "datanucleus.rdbms.initializeColumnInfo", "NONE",
+        "initializeColumnInfo setting for DataNucleus; set to NONE at least on Postgres."),
+    DATANUCLEUS_PLUGIN_REGISTRY_BUNDLE_CHECK("datanucleus.plugin.pluginRegistryBundleCheck",
+        "datanucleus.plugin.pluginRegistryBundleCheck", "LOG",
+        "Defines what happens when plugin bundles are found and are duplicated [EXCEPTION|LOG|NONE]"),
+    DATANUCLEUS_TRANSACTION_ISOLATION("datanucleus.transactionIsolation",
+        "datanucleus.transactionIsolation", "read-committed",
+        "Default transaction isolation level for identity generation."),
+    DATANUCLEUS_USE_LEGACY_VALUE_STRATEGY("datanucleus.rdbms.useLegacyNativeValueStrategy",
+        "datanucleus.rdbms.useLegacyNativeValueStrategy", true, ""),
     DBACCESS_SSL_PROPS("metastore.dbaccess.ssl.properties", "hive.metastore.dbaccess.ssl.properties", "",
         "Comma-separated SSL properties for metastore to access database when JDO connection URL\n" +
             "enables SSL access. e.g. javax.net.ssl.trustStore=/tmp/truststore,javax.net.ssl.trustStorePassword=pwd."),
@@ -598,6 +566,7 @@ public class MetastoreConf {
         "The Java class (implementing the StatsAggregator interface) that is used by default if hive.stats.dbclass is custom type."),
     STATS_DEFAULT_PUBLISHER("metastore.stats.default.publisher", "hive.stats.default.publisher", "",
         "The Java class (implementing the StatsPublisher interface) that is used by default if hive.stats.dbclass is custom type."),
+    STORE_MANAGER_TYPE("datanucleus.storeManagerType", "datanucleus.storeManagerType", "rdbms", "metadata store type"),
     STORAGE_SCHEMA_READER_IMPL("metastore.storage.schema.reader.impl", NO_SUCH_KEY,
         "org.apache.hadoop.hive.metastore.SerDeStorageSchemaReader",
         "The class to use to read schemas from storage.  It must implement " +
@@ -682,6 +651,14 @@ public class MetastoreConf {
         "hive.metastore.thrift.compact.protocol.enabled", false,
         "If true, the metastore Thrift interface will use TCompactProtocol. When false (default) TBinaryProtocol will be used.\n" +
             "Setting it to true will break compatibility with older clients running TBinaryProtocol."),
+    VALIDATE_COLUMNS("datanucleus.schema.validateColumns", "datanucleus.schema.validateColumns", false,
+        "validates existing schema against code. turn this on if you want to verify existing schema"),
+    VALIDATE_CONSTRAINTS("datanucleus.schema.validateConstraints",
+        "datanucleus.schema.validateConstraints", false,
+        "validates existing schema against code. turn this on if you want to verify existing schema"),
+    VALIDATE_TABLES("datanucleus.schema.validateTables",
+        "datanucleus.schema.validateTables", false,
+        "validates existing schema against code. turn this on if you want to verify existing schema"),
     WAREHOUSE("metastore.warehouse.dir", "hive.metastore.warehouse.dir", "/user/hive/warehouse",
         "location of default database for the warehouse"),
     WRITE_SET_REAPER_INTERVAL("metastore.writeset.reaper.interval",
@@ -844,22 +821,30 @@ public class MetastoreConf {
     }
   }
 
-  @VisibleForTesting
-  static ConfVars[] onesWeNeedToSetPropertiesFor = {
-      /*
-      ConfVars.DN_AUTO_CREATE_ALL,
-      */
+  public static final ConfVars[] dataNucleusAndJdoConfs = {
+      ConfVars.AUTO_CREATE_ALL,
       ConfVars.CONNECTION_DRIVER,
       ConfVars.CONNECTION_POOLING_MAX_CONNECTIONS,
       ConfVars.CONNECTION_POOLING_TYPE,
       ConfVars.CONNECTURLKEY,
       ConfVars.CONNECTION_USER_NAME,
+      ConfVars.DATANUCLEUS_AUTOSTART,
+      ConfVars.DATANUCLEUS_CACHE_LEVEL2,
+      ConfVars.DATANUCLEUS_CACHE_LEVEL2_TYPE,
+      ConfVars.DATANUCLEUS_INIT_COL_INFO,
+      ConfVars.DATANUCLEUS_PLUGIN_REGISTRY_BUNDLE_CHECK,
+      ConfVars.DATANUCLEUS_TRANSACTION_ISOLATION,
+      ConfVars.DATANUCLEUS_USE_LEGACY_VALUE_STRATEGY,
       ConfVars.DETACH_ALL_ON_COMMIT,
       ConfVars.IDENTIFIER_FACTORY,
       ConfVars.MANAGER_FACTORY_CLASS,
       ConfVars.MULTITHREADED,
       ConfVars.NON_TRANSACTIONAL_READ,
-      ConfVars.PWD
+      ConfVars.PWD,
+      ConfVars.STORE_MANAGER_TYPE,
+      ConfVars.VALIDATE_COLUMNS,
+      ConfVars.VALIDATE_CONSTRAINTS,
+      ConfVars.VALIDATE_TABLES
   };
 
   // Make sure no one calls this
@@ -891,11 +876,12 @@ public class MetastoreConf {
     URL metastoreSiteURL = findConfigFile(classLoader, "metastore-site.xml");
     if (metastoreSiteURL !=  null) conf.addResource(metastoreSiteURL);
 
-    // This seems seriously questionable, but I'll carry it forward for backwards compatibility.
     // If a system property that matches one of our conf value names is set then use the value
     // it's set to to set our own conf value.
     for (ConfVars var : ConfVars.values()) {
       if (System.getProperty(var.varname) != null) {
+        LOG.debug("Setting conf value " + var.varname + " using value " +
+            System.getProperty(var.varname));
         conf.set(var.varname, System.getProperty(var.varname));
       } else if (System.getProperty(var.hiveName) != null) {
         conf.set(var.hiveName, System.getProperty(var.hiveName));
@@ -903,12 +889,15 @@ public class MetastoreConf {
     }
 
     // There are some we need to set a system property for based on whatever value we have.  This
-    // is because we are setting it up for a lower layer such as jdo.
-    for (ConfVars var : onesWeNeedToSetPropertiesFor) {
-      LOG.debug("Setting property for " + var.varname + " to " + var.defaultVal.toString());
-      System.setProperty(var.varname, conf.get(var.varname, var.defaultVal.toString()));
-      System.setProperty(var.varname, conf.get(var.hiveName, var.defaultVal.toString()));
+    // is because we are setting it up for a lower layer such as jdo.  All of these have the same
+    // value for both us and Hive, so no need to mess with the hiveName.
+    /*
+    for (ConfVars var : dataNucleusAndJdoConfs) {
+      String val = conf.get(var.varname, var.defaultVal.toString());
+      LOG.debug("Setting property for " + var.varname + " to " + val);
+      System.setProperty(var.varname, val);
     }
+    */
 
     // If we are going to validate the schema, make sure we don't create it
     if (getBoolVar(conf, ConfVars.SCHEMA_VERIFICATION)) {
@@ -1296,10 +1285,28 @@ public class MetastoreConf {
   }
 
   public static boolean isPrintable(String key) {
-    for (ConfVars var : unprintables) {
-      if (var.varname.equals(key) || var.hiveName.equals(key)) return false;
+    return !unprintables.contains(key);
+  }
+
+  /**
+   * Return the configuration value as a String.  This does not work on time based values as it
+   * doesn't have a time unit.
+   * @param conf configuration to read
+   * @param var variable to read
+   * @return value as an object
+   */
+  public static String getAsString(Configuration conf, ConfVars var) {
+    if (var.defaultVal.getClass() == String.class) {
+      return getVar(conf, var);
+    } else if (var.defaultVal.getClass() == Boolean.class) {
+      return Boolean.toString(getBoolVar(conf, var));
+    } else if (var.defaultVal.getClass() == Long.class) {
+      return Long.toString(getLongVar(conf, var));
+    } else if (var.defaultVal.getClass() == Double.class) {
+      return Double.toString(getDoubleVar(conf, var));
+    } else {
+      throw new RuntimeException("Invalid type for getObject " + var.defaultVal.getClass().getName());
     }
-    return true;
   }
 
   public static URL getHiveDefaultLocation() {
