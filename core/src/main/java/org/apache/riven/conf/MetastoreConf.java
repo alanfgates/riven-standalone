@@ -20,6 +20,7 @@ package org.apache.riven.conf;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.riven.client.DefaultMetaStoreFilterHookImpl;
+import org.apache.riven.impl.DefaultAlterHandler;
 import org.apache.riven.impl.MetaStoreFsImpl;
 import org.apache.riven.impl.MetaStoreSchemaInfo;
 import org.apache.riven.impl.ObjectStore;
@@ -150,6 +151,7 @@ public class MetastoreConf {
       ConfVars.AGGREGATE_STATS_CACHE_MAX_READER_WAIT,
       ConfVars.AGGREGATE_STATS_CACHE_MAX_FULL,
       ConfVars.AGGREGATE_STATS_CACHE_CLEAN_UNTIL,
+      ConfVars.DISALLOW_INCOMPATIBLE_COL_TYPE_CHANGES,
   };
 
   /**
@@ -221,7 +223,7 @@ public class MetastoreConf {
         "hive.metastore.aggregate.stats.cache.ttl", 600, TimeUnit.SECONDS,
         "Number of seconds for a cached node to be active in the cache before they become stale."),
     ALTER_HANDLER("metastore.alter.handler", "hive.metastore.alter.impl",
-        "org.apache.hadoop.hive.metastore.HiveAlterHandler",
+        DefaultAlterHandler.class.getName(),
         "Alter handler.  For now defaults to the Hive one.  Really need a better default option"),
     ASYNC_LOG_ENABLED("metastore.async.log.enabled", "hive.async.log.enabled", true,
         "Whether to enable Log4j2's asynchronous logging. Asynchronous logging can give\n" +
@@ -378,6 +380,20 @@ public class MetastoreConf {
             "SQL. For some DBs like Oracle and MSSQL, there are hardcoded or perf-based limitations\n" +
             "that necessitate this. For DBs that can handle the queries, this isn't necessary and\n" +
             "may impede performance. -1 means no batching, 0 means automatic batching."),
+    DISALLOW_INCOMPATIBLE_COL_TYPE_CHANGES("metastore.disallow.incompatible.col.type.changes",
+        "hive.metastore.disallow.incompatible.col.type.changes", true,
+        "If true, ALTER TABLE operations which change the type of a\n" +
+            "column (say STRING) to an incompatible type (say MAP) are disallowed.\n" +
+            "RCFile default SerDe (ColumnarSerDe) serializes the values in such a way that the\n" +
+            "datatypes can be converted from string to any type. The map is also serialized as\n" +
+            "a string, which can be read as a string as well. However, with any binary\n" +
+            "serialization, this is not true. Blocking the ALTER TABLE prevents ClassCastExceptions\n" +
+            "when subsequently trying to access old partitions.\n" +
+            "\n" +
+            "Primitive types like INT, STRING, BIGINT, etc., are compatible with each other and are\n" +
+            "not blocked.\n" +
+            "\n" +
+            "See HIVE-4409 for more details."),
     END_FUNCTION_LISTENERS("metastore.end.function.listeners",
         "hive.metastore.end.function.listeners", "",
         "List of comma separated listeners for the end of metastore functions."),
@@ -887,17 +903,6 @@ public class MetastoreConf {
         conf.set(var.hiveName, System.getProperty(var.hiveName));
       }
     }
-
-    // There are some we need to set a system property for based on whatever value we have.  This
-    // is because we are setting it up for a lower layer such as jdo.  All of these have the same
-    // value for both us and Hive, so no need to mess with the hiveName.
-    /*
-    for (ConfVars var : dataNucleusAndJdoConfs) {
-      String val = conf.get(var.varname, var.defaultVal.toString());
-      LOG.debug("Setting property for " + var.varname + " to " + val);
-      System.setProperty(var.varname, val);
-    }
-    */
 
     // If we are going to validate the schema, make sure we don't create it
     if (getBoolVar(conf, ConfVars.SCHEMA_VERIFICATION)) {

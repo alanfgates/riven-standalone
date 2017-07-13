@@ -63,9 +63,11 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -965,4 +967,109 @@ public class MetaStoreUtils {
     socket.close();
     return port;
   }
+
+  public static String getListType(String t) {
+    return "array<" + t + ">";
+  }
+
+  // check if stats need to be (re)calculated
+  public static boolean requireCalStats(Configuration hiveConf, Partition oldPart,
+                                        Partition newPart, Table tbl, EnvironmentContext environmentContext) {
+
+    if (environmentContext != null
+        && environmentContext.isSetProperties()
+        && StatsSetupConst.TRUE.equals(environmentContext.getProperties().get(
+        StatsSetupConst.DO_NOT_UPDATE_STATS))) {
+      return false;
+    }
+
+    if (isView(tbl)) {
+      return false;
+    }
+
+    if  (oldPart == null && newPart == null) {
+      return true;
+    }
+
+    // requires to calculate stats if new partition doesn't have it
+    if ((newPart == null) || (newPart.getParameters() == null)
+        || !containsAllFastStats(newPart.getParameters())) {
+      return true;
+    }
+
+    if (environmentContext != null && environmentContext.isSetProperties()) {
+      String statsType = environmentContext.getProperties().get(StatsSetupConst.STATS_GENERATED);
+      // no matter STATS_GENERATED is USER or TASK, all need to re-calculate the stats:
+      // USER: alter table .. update statistics
+      // TASK: from some sql operation which could collect and compute stats
+      if (StatsSetupConst.TASK.equals(statsType) || StatsSetupConst.USER.equals(statsType)) {
+        return true;
+      }
+    }
+
+    // requires to calculate stats if new and old have different fast stats
+    return !isFastStatsSame(oldPart, newPart);
+  }
+
+  public static boolean isFastStatsSame(Partition oldPart, Partition newPart) {
+    // requires to calculate stats if new and old have different fast stats
+    if ((oldPart != null) && (oldPart.getParameters() != null)) {
+      for (String stat : StatsSetupConst.fastStats) {
+        if (oldPart.getParameters().containsKey(stat)) {
+          Long oldStat = Long.parseLong(oldPart.getParameters().get(stat));
+          Long newStat = Long.parseLong(newPart.getParameters().get(stat));
+          if (!oldStat.equals(newStat)) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Determine if two lists of hte columns contain the same columns in the same order.
+   * @param oldCols old list of columns
+   * @param newCols new list of columns
+   * @return true or false
+   */
+  public static boolean areSameColumns(List<FieldSchema> oldCols, List<FieldSchema> newCols) {
+    if (oldCols.size() != newCols.size()) {
+      return false;
+    } else {
+      for (int i = 0; i < oldCols.size(); i++) {
+        FieldSchema oldCol = oldCols.get(i);
+        FieldSchema newCol = newCols.get(i);
+        if(!oldCol.equals(newCol)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Determine if all of the old columns are contained in the new columns, regardless of order.
+   * @param oldCols original set of columns
+   * @param newCols new set of columns
+   * @return true if every old column is somewhere in the new columns list.
+   */
+  public static boolean columnsIncluded(List<FieldSchema> oldCols, List<FieldSchema> newCols) {
+    if (oldCols.size() > newCols.size()) {
+      return false;
+    }
+
+    Set<FieldSchema> newColsSet = new HashSet<FieldSchema>(newCols);
+    for (final FieldSchema oldCol : oldCols) {
+      if (!newColsSet.contains(oldCol)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
 }
