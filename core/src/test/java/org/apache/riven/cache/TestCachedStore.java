@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -24,12 +24,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.riven.cache.CachedStore;
-import org.apache.riven.cache.SharedCache;
 import org.apache.riven.conf.MetastoreConf;
 import org.apache.riven.impl.ObjectStore;
 import org.apache.riven.TableType;
-import org.apache.riven.impl.TestObjectStore.MockPartitionExpressionProxy;
 import org.apache.riven.api.BooleanColumnStatsData;
 import org.apache.riven.api.ColumnStatistics;
 import org.apache.riven.api.ColumnStatisticsData;
@@ -58,8 +55,6 @@ public class TestCachedStore {
   public void setUp() throws Exception {
     Configuration conf = MetastoreConf.newMetastoreConf();
     MetastoreConf.setBoolVar(conf, MetastoreConf.ConfVars.HIVE_IN_TEST, true);
-    MetastoreConf.setVar(conf, MetastoreConf.ConfVars.EXPRESSION_PROXY_CLASS,
-        MockPartitionExpressionProxy.class.getName());
     objectStore = new ObjectStore();
     objectStore.setConf(conf);
     cachedStore = new CachedStore();

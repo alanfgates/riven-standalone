@@ -4323,8 +4323,7 @@ public class MetaStoreServer extends ThriftHiveMetastore {
         String className =
             MetastoreConf.getVar(conf, MetastoreConf.ConfVars.STORAGE_SCHEMA_READER_IMPL);
         Class<? extends StorageSchemaReader> readerClass =
-            JavaUtils.getClass(className,
-                StorageSchemaReader.class);
+            JavaUtils.getClass(className, StorageSchemaReader.class);
         try {
           storageSchemaReader = readerClass.newInstance();
         } catch (InstantiationException|IllegalAccessException e) {

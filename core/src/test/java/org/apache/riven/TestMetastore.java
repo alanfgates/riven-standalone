@@ -36,6 +36,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.riven.client.MetaHook;
@@ -106,9 +107,9 @@ import static org.junit.Assert.fail;
 public abstract class TestMetastore {
   private static final Logger LOG = LoggerFactory.getLogger(TestMetastore.class);
 
-  private static final String SERDE_LIB = "TestSerde";
-  private static final String INPUT_FORMAT = "TestInputFormat";
-  private static final String OUTPUT_FORMAT = "TestOutputFormat";
+  private static final String SERDE_LIB = "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe";
+  private static final String INPUT_FORMAT = "org.apache.hadoop.hive.ql.io.HiveInputFormat";
+  private static final String OUTPUT_FORMAT = "org.apache.hadoop.hive.ql.io.HiveOutputFormat";
 
   protected static MetaStoreClient client;
   protected static Configuration conf;
@@ -1624,8 +1625,8 @@ public abstract class TestMetastore {
      // compare stats obj to ensure what we get is what we wrote
       assertNotNull(colStats2);
       assertEquals(colStats2.getColName(), colName[0]);
-      assertEquals(colStats2.getStatsData().getDoubleStats().getLowValue(), lowValue);
-      assertEquals(colStats2.getStatsData().getDoubleStats().getHighValue(), highValue);
+      assertEquals(colStats2.getStatsData().getDoubleStats().getLowValue(), lowValue, 0.0001);
+      assertEquals(colStats2.getStatsData().getDoubleStats().getHighValue(), highValue, 0.0001);
       assertEquals(colStats2.getStatsData().getDoubleStats().getNumNulls(), numNulls);
       assertEquals(colStats2.getStatsData().getDoubleStats().getNumDVs(), numDVs);
 
@@ -1685,7 +1686,7 @@ public abstract class TestMetastore {
      assertEquals(colStats.getStatsDesc().getPartName(), partName);
      assertEquals(colStats2.getColName(), colName[1]);
      assertEquals(colStats2.getStatsData().getStringStats().getMaxColLen(), maxColLen);
-     assertEquals(colStats2.getStatsData().getStringStats().getAvgColLen(), avgColLen);
+     assertEquals(colStats2.getStatsData().getStringStats().getAvgColLen(), avgColLen, 0.001);
      assertEquals(colStats2.getStatsData().getStringStats().getNumNulls(), numNulls);
      assertEquals(colStats2.getStatsData().getStringStats().getNumDVs(), numDVs);
 
@@ -2954,6 +2955,8 @@ public abstract class TestMetastore {
     }
 
     // Succeed - "transactional" is set to true, and the table is bucketed, and uses ORC
+    // We can't do this in the metastore only side as we don't have the appropriate file formats
+    /*
     params.clear();
     params.put("transactional", "true");
     List<String> bucketCols = new ArrayList<String>();
@@ -2970,7 +2973,7 @@ public abstract class TestMetastore {
     try {
       params.clear();
       params.put("transactional", "false");
-      t = new Table();
+      Table t = new Table();
       t.setParameters(params);
       client.alter_table(dbName, tblName, t);
       assertTrue("Expected exception", false);
@@ -2983,7 +2986,7 @@ public abstract class TestMetastore {
       tblName += "1";
       params.clear();
       sd.unsetBucketCols();
-      t = createTable(dbName, tblName, owner, params, null, sd, 0);
+      Table t = createTable(dbName, tblName, owner, params, null, sd, 0);
       params.put("transactional", "true");
       t.setParameters(params);
       client.alter_table(dbName, tblName, t);
@@ -3003,6 +3006,7 @@ public abstract class TestMetastore {
     t.setPartitionKeys(Collections.EMPTY_LIST);
     client.alter_table(dbName, tblName, t);
     assertTrue("ALTER TABLE should succeed", "true".equals(t.getParameters().get(metastoreConstants.TABLE_IS_TRANSACTIONAL)));
+    */
   }
 
   private Table createTable(String dbName, String tblName, String owner,
@@ -3219,7 +3223,7 @@ public abstract class TestMetastore {
   public void testRetriableClientWithConnLifetime() throws Exception {
 
     Configuration conf = MetastoreConf.newMetastoreConf();
-    MetastoreConf.setLongVar(conf, ConfVars.CLIENT_SOCKET_LIFETIME, 3);
+    MetastoreConf.setTimeVar(conf, ConfVars.CLIENT_SOCKET_LIFETIME, 3, TimeUnit.SECONDS);
     long timeout = 5 * 1000; // Lets use a timeout more than the socket lifetime to simulate a reconnect
 
     // Test a normal retriable client

@@ -234,7 +234,9 @@ public final class TransactionalValidationListener extends MetaStorePreEventList
         return false;
       }
     } catch (ClassNotFoundException e) {
-      throw new MetaException("Invalid input/output format for table");
+      // This means we're not operating in the Hive namespace.  We can't validate whether this is
+      // ACID compliant or not so assume it isn't.
+      return false;
     }
 
     return true;

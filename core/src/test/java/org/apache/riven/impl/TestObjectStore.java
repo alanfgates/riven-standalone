@@ -75,26 +75,9 @@ public class TestObjectStore {
   private static final String ROLE2 = "testobjectstorerole2";
   private static final Logger LOG = LoggerFactory.getLogger(TestObjectStore.class.getName());
 
-  public static class MockPartitionExpressionProxy implements
-                                                   PartitionExpressionProxy {
-    @Override
-    public String convertExprToFilter(byte[] expr) throws MetaException {
-      return null;
-    }
-
-    @Override
-    public boolean filterPartitionsByExpr(List<FieldSchema> partColumns, byte[] expr,
-                                          String defaultPartitionName,
-                                          List<String> partitionNames) throws MetaException {
-      return false;
-    }
-  }
-
   @Before
   public void setUp() throws Exception {
     Configuration conf = MetastoreConf.newMetastoreConf();
-    MetastoreConf.setVar(conf, MetastoreConf.ConfVars.EXPRESSION_PROXY_CLASS,
-        MockPartitionExpressionProxy.class.getName());
 
     objectStore = new ObjectStore();
     objectStore.setConf(conf);

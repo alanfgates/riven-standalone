@@ -21,6 +21,8 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.riven.client.DefaultMetaStoreFilterHookImpl;
 import org.apache.riven.impl.DefaultAlterHandler;
+import org.apache.riven.impl.DefaultPartitionExpressionProxy;
+import org.apache.riven.impl.DefaultStorageSchemaReader;
 import org.apache.riven.impl.MetaStoreFsImpl;
 import org.apache.riven.impl.MetaStoreSchemaInfo;
 import org.apache.riven.impl.ObjectStore;
@@ -415,7 +417,7 @@ public class MetastoreConf {
             "both the client and server sides. Further note that its best effort. \n" +
             "If client sets its to true and server sets it to false, client setting will be ignored."),
     EXPRESSION_PROXY_CLASS("metastore.expression.proxy", "hive.metastore.expression.proxy",
-        "org.apache.hadoop.hive.ql.optimizer.ppr.PartitionExpressionForMetastore",
+        DefaultPartitionExpressionProxy.class.getName(),
         "Class to use to process expressions in partition pruning."),
     FILTER_HOOK("metastore.filter.hook", "hive.metastore.filter.hook",
         DefaultMetaStoreFilterHookImpl.class.getName(),
@@ -584,7 +586,7 @@ public class MetastoreConf {
         "The Java class (implementing the StatsPublisher interface) that is used by default if hive.stats.dbclass is custom type."),
     STORE_MANAGER_TYPE("datanucleus.storeManagerType", "datanucleus.storeManagerType", "rdbms", "metadata store type"),
     STORAGE_SCHEMA_READER_IMPL("metastore.storage.schema.reader.impl", NO_SUCH_KEY,
-        "org.apache.hadoop.hive.metastore.SerDeStorageSchemaReader",
+        DefaultStorageSchemaReader.class.getName(),
         "The class to use to read schemas from storage.  It must implement " +
         "org.apache.riven.StorageSchemaReader"),
     SUPPORT_SPECICAL_CHARACTERS_IN_TABLE_NAMES("metastore.support.special.characters.tablename",
