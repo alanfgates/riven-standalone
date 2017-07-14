@@ -837,6 +837,11 @@ public class MetastoreConf {
     public boolean isCaseSensitive() {
       return caseSensitive;
     }
+
+    @Override
+    public String toString() {
+      return varname;
+    }
   }
 
   public static final ConfVars[] dataNucleusAndJdoConfs = {
