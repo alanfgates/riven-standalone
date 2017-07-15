@@ -59,7 +59,7 @@ public class TestFilterHooks {
     @Override
     public List<String> filterDatabases(List<String> dbList) throws MetaException  {
       if (blockResults) {
-        return new ArrayList<String>();
+        return new ArrayList<>();
       }
       return super.filterDatabases(dbList);
     }
@@ -75,7 +75,7 @@ public class TestFilterHooks {
     @Override
     public List<String> filterTableNames(String dbName, List<String> tableList) throws MetaException {
       if (blockResults) {
-        return new ArrayList<String>();
+        return new ArrayList<>();
       }
       return super.filterTableNames(dbName, tableList);
     }
@@ -91,7 +91,7 @@ public class TestFilterHooks {
     @Override
     public List<Table> filterTables(List<Table> tableList) throws MetaException {
       if (blockResults) {
-        return new ArrayList<Table>();
+        return new ArrayList<>();
       }
       return super.filterTables(tableList);
     }
@@ -99,7 +99,7 @@ public class TestFilterHooks {
     @Override
     public List<Partition> filterPartitions(List<Partition> partitionList) throws MetaException {
       if (blockResults) {
-        return new ArrayList<Partition>();
+        return new ArrayList<>();
       }
       return super.filterPartitions(partitionList);
     }
@@ -108,7 +108,7 @@ public class TestFilterHooks {
     public List<PartitionSpec> filterPartitionSpecs(
         List<PartitionSpec> partitionSpecList) throws MetaException {
       if (blockResults) {
-        return new ArrayList<PartitionSpec>();
+        return new ArrayList<>();
       }
       return super.filterPartitionSpecs(partitionSpecList);
     }
@@ -125,7 +125,7 @@ public class TestFilterHooks {
     public List<String> filterPartitionNames(String dbName, String tblName,
         List<String> partitionNames) throws MetaException {
       if (blockResults) {
-        return new ArrayList<String>();
+        return new ArrayList<>();
       }
       return super.filterPartitionNames(dbName, tblName, partitionNames);
     }
@@ -142,7 +142,7 @@ public class TestFilterHooks {
     public List<String> filterIndexNames(String dbName, String tblName,
         List<String> indexList) throws MetaException {
       if (blockResults) {
-        return new ArrayList<String>();
+        return new ArrayList<>();
       }
       return super.filterIndexNames(dbName, tblName, indexList);
     }
@@ -150,7 +150,7 @@ public class TestFilterHooks {
     @Override
     public List<Index> filterIndexes(List<Index> indexeList) throws MetaException {
       if (blockResults) {
-        return new ArrayList<Index>();
+        return new ArrayList<>();
       }
       return super.filterIndexes(indexeList);
     }
@@ -201,11 +201,13 @@ public class TestFilterHooks {
         .setDbName(DBNAME1)
         .setTableName(TAB2)
         .setValues(Collections.singletonList("value1"))
+        .setCols(Collections.singletonList(new FieldSchema("id", "int", "")))
         .build());
     msc.add_partition(UtilsForTests.PartitionBuilder.get()
         .setDbName(DBNAME1)
         .setTableName(TAB2)
         .setValues(Collections.singletonList("value2"))
+        .setCols(Collections.singletonList(new FieldSchema("id", "int", "")))
         .build());
     Table indexTable = UtilsForTests.TableBuilder.get()
         .setDbName(DBNAME1)

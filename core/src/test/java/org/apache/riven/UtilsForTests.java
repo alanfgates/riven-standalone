@@ -23,13 +23,14 @@ import org.apache.riven.api.Index;
 import org.apache.riven.api.Order;
 import org.apache.riven.api.Partition;
 import org.apache.riven.api.SerDeInfo;
+import org.apache.riven.api.SkewedInfo;
 import org.apache.riven.api.StorageDescriptor;
 import org.apache.riven.api.Table;
-import org.apache.riven.client.IMetaStoreClient;
 import org.apache.thrift.TException;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +43,10 @@ class UtilsForTests {
 
   static class DatabaseBuilder {
     private String name, description, location;
-    private Map<String, String> params = Collections.emptyMap();
+    private Map<String, String> params = new HashMap<>();
+
+    public DatabaseBuilder() {
+    }
 
     static DatabaseBuilder get() {
       return new DatabaseBuilder();
@@ -69,29 +73,63 @@ class UtilsForTests {
     }
 
     Database build() throws TException {
+      assert name != null : "name must be set";
       return new Database(name, description, location, params);
     }
   }
 
-  static class TableBuilder {
-    private String dbName, tableName, location, inputFormat, outputFormat, serdeName, serdeLib,
-                   owner, viewOriginalText, viewExpandedText, type;
-    private List<FieldSchema> cols, partCols;
-    private int createTime, lastAccessTime, retention, numBuckets;
-    private Map<String, String> tableParams, storageDescriptorParams, serdeParams;
-    private boolean compressed;
-    private List<String> bucketCols, orderCols;
-    private List<Integer> orderDir;
+  // This class does not have setters because it would return the wrong type
+  private static class StorageDescriptorBuilder {
+    protected String location, inputFormat, outputFormat, serdeName, serdeLib;
+    protected List<FieldSchema> cols;
+    protected int numBuckets;
+    protected Map<String, String> storageDescriptorParams, serdeParams;
+    protected boolean compressed, storedAsSubDirectories;
+    protected List<String> bucketCols, skewedColNames;
+    protected List<Order> sortCols;
+    protected List<List<String>> skewedColValues;
+    protected Map<List<String>,String> skewedColValueLocationMaps;
 
-    private TableBuilder() {
+    protected StorageDescriptorBuilder() {
       // Set some reasonable defaults
-      tableParams = storageDescriptorParams = serdeParams = Collections.emptyMap();
-      owner = "me";
-      createTime = lastAccessTime = retention = numBuckets = 0;
+      storageDescriptorParams = new HashMap<>();
+      serdeParams = new HashMap<>();
+      bucketCols = new ArrayList<>();
+      sortCols = new ArrayList<>();
+      numBuckets = 0;
       compressed = false;
       inputFormat = INPUT_FORMAT;
       outputFormat = OUTPUT_FORMAT;
       serdeLib = SERDE_LIB;
+      skewedColNames = new ArrayList<>();
+      skewedColValues = new ArrayList<>();
+      skewedColValueLocationMaps = new HashMap<>();
+    }
+
+    protected StorageDescriptor buildSd() {
+      assert cols != null : "cols must be set";
+      SerDeInfo serdeInfo = new SerDeInfo(serdeName, serdeLib, serdeParams);
+      StorageDescriptor sd = new StorageDescriptor(cols, location, inputFormat, outputFormat,
+          compressed, numBuckets, serdeInfo, bucketCols, sortCols, storageDescriptorParams);
+      sd.setStoredAsSubDirectories(storedAsSubDirectories);
+      SkewedInfo skewed = new SkewedInfo(skewedColNames, skewedColValues,
+          skewedColValueLocationMaps);
+      sd.setSkewedInfo(skewed);
+      return sd;
+    }
+  }
+
+  static class TableBuilder extends StorageDescriptorBuilder {
+    private String dbName, tableName, owner, viewOriginalText, viewExpandedText, type;
+    private List<FieldSchema> partCols;
+    private int createTime, lastAccessTime, retention;
+    private Map<String, String> tableParams;
+
+    private TableBuilder() {
+      // Set some reasonable defaults
+      tableParams = new HashMap<>();
+      owner = "me";
+      createTime = lastAccessTime = retention = 0;
     }
 
     static TableBuilder get() {
@@ -105,6 +143,11 @@ class UtilsForTests {
 
     TableBuilder setTableName(String tableName) {
       this.tableName = tableName;
+      return this;
+    }
+
+    TableBuilder setCols(List<FieldSchema> cols) {
+      this.cols = cols;
       return this;
     }
 
@@ -150,11 +193,6 @@ class UtilsForTests {
 
     TableBuilder setType(String type) {
       this.type = type;
-      return this;
-    }
-
-    TableBuilder setCols(List<FieldSchema> cols) {
-      this.cols = cols;
       return this;
     }
 
@@ -209,50 +247,45 @@ class UtilsForTests {
       return this;
     }
 
-    TableBuilder setOrderCols(List<String> orderCols) {
-      this.orderCols = orderCols;
+    TableBuilder setSortCols(List<Order> sortCols) {
+      this.sortCols = sortCols;
       return this;
     }
 
-    TableBuilder setOrderDir(List<Integer> orderDir) {
-      this.orderDir = orderDir;
+    TableBuilder setSkewedColNames(List<String> skewedColNames) {
+      this.skewedColNames = skewedColNames;
+      return this;
+    }
+
+    TableBuilder setSkewedColsValues(List<List<String>> skewedColsValues) {
+      this.skewedColValues = skewedColsValues;
+      return this;
+
+    }
+
+    TableBuilder setSkewedColValueLocationMaps(Map<List<String>,String> skewedColValueLocationMaps) {
+      this.skewedColValueLocationMaps = skewedColValueLocationMaps;
       return this;
     }
 
     Table build() {
-      SerDeInfo serdeInfo = new SerDeInfo(serdeName, serdeLib, serdeParams);
-      List<Order> sortCols = null;
-      if (orderCols != null && orderCols.size() > 0) {
-        assert orderCols.size() == orderDir.size();
-        sortCols = new ArrayList<>(orderCols.size());
-        for (int i = 0; i < orderCols.size(); i++) {
-          sortCols.add(new Order(orderCols.get(i), orderDir.get(i)));
-        }
-      }
-      StorageDescriptor sd = new StorageDescriptor(cols, location, inputFormat, outputFormat,
-          compressed, numBuckets, serdeInfo, bucketCols, sortCols, storageDescriptorParams);
-      return new Table(tableName, dbName, owner, createTime, lastAccessTime, retention, sd,
+      assert dbName != null : "dbName must be set";
+      assert tableName != null : "tableName must be set";
+      return new Table(tableName, dbName, owner, createTime, lastAccessTime, retention, buildSd(),
           partCols, tableParams, viewOriginalText, viewExpandedText, type);
     }
   }
 
-  static class PartitionBuilder {
-    private String dbName, tableName, location, inputFormat, outputFormat, serdeName, serdeLib;
-    private List<FieldSchema> cols;
-    private int createTime, lastAccessTime, numBuckets;
-    private Map<String, String> partParams, storageDescriptorParams, serdeParams;
-    private boolean compressed;
-    private List<String> values, bucketCols, orderCols;
-    private List<Integer> orderDir;
+  static class PartitionBuilder extends StorageDescriptorBuilder {
+    private String dbName, tableName;
+    private int createTime, lastAccessTime;
+    private Map<String, String> partParams;
+    private List<String> values;
 
     private PartitionBuilder() {
       // Set some reasonable defaults
-      partParams = storageDescriptorParams = serdeParams = Collections.emptyMap();
-      createTime = lastAccessTime = numBuckets = 0;
-      compressed = false;
-      inputFormat = INPUT_FORMAT;
-      outputFormat = OUTPUT_FORMAT;
-      serdeLib = SERDE_LIB;
+      partParams = new HashMap<>();
+      createTime = lastAccessTime = 0;
     }
 
     static PartitionBuilder get() {
@@ -266,6 +299,11 @@ class UtilsForTests {
 
     PartitionBuilder setTableName(String tableName) {
       this.tableName = tableName;
+      return this;
+    }
+
+    PartitionBuilder setValues(List<String> values) {
+      this.values = values;
       return this;
     }
 
@@ -335,60 +373,51 @@ class UtilsForTests {
       return this;
     }
 
-    PartitionBuilder setOrderCols(List<String> orderCols) {
-      this.orderCols = orderCols;
-      return this;
-    }
-
-    PartitionBuilder setOrderDir(List<Integer> orderDir) {
-      this.orderDir = orderDir;
-      return this;
-    }
-
     PartitionBuilder setPartParams(Map<String, String> partParams) {
       this.partParams = partParams;
       return this;
     }
 
-    PartitionBuilder setValues(List<String> values) {
-      this.values = values;
+    PartitionBuilder setSortCols(List<Order> sortCols) {
+      this.sortCols = sortCols;
+      return this;
+    }
+
+    PartitionBuilder setSkewedColNames(List<String> skewedColNames) {
+      this.skewedColNames = skewedColNames;
+      return this;
+    }
+
+    PartitionBuilder setSkewedColsValues(List<List<String>> skewedColsValues) {
+      this.skewedColValues = skewedColsValues;
+      return this;
+
+    }
+
+    PartitionBuilder setSkewedColValueLocationMaps(Map<List<String>,String> skewedColValueLocationMaps) {
+      this.skewedColValueLocationMaps = skewedColValueLocationMaps;
       return this;
     }
 
     Partition build() {
-      SerDeInfo serdeInfo = new SerDeInfo(serdeName, serdeLib, serdeParams);
-      List<Order> sortCols = null;
-      if (orderCols != null && orderCols.size() > 0) {
-        assert orderCols.size() == orderDir.size();
-        sortCols = new ArrayList<>(orderCols.size());
-        for (int i = 0; i < orderCols.size(); i++) {
-          sortCols.add(new Order(orderCols.get(i), orderDir.get(i)));
-        }
-      }
-      StorageDescriptor sd = new StorageDescriptor(cols, location, inputFormat, outputFormat,
-          compressed, numBuckets, serdeInfo, bucketCols, sortCols, storageDescriptorParams);
-      return new Partition(values, dbName, tableName, createTime, lastAccessTime, sd, partParams);
+      assert dbName != null : "dbName must be set";
+      assert tableName != null : "tableName must be set";
+      assert values != null : "values must be set";
+      return new Partition(values, dbName, tableName, createTime, lastAccessTime, buildSd(),
+          partParams);
     }
   }
 
-  static class IndexBuilder {
-    private String dbName, tableName, location, inputFormat, outputFormat, serdeName, serdeLib,
-                   indexName, indexTableName, handlerClass;
-    private List<FieldSchema> cols;
-    private int createTime, lastAccessTime, numBuckets;
-    private Map<String, String> indexParams, storageDescriptorParams, serdeParams;
-    private boolean compressed, deferredRebuild;
-    private List<String> bucketCols, orderCols;
-    private List<Integer> orderDir;
+  static class IndexBuilder extends StorageDescriptorBuilder {
+    private String dbName, tableName, indexName, indexTableName, handlerClass;
+    private int createTime, lastAccessTime;
+    private Map<String, String> indexParams;
+    private boolean deferredRebuild;
 
     private IndexBuilder() {
       // Set some reasonable defaults
-      indexParams = storageDescriptorParams = serdeParams = Collections.emptyMap();
-      createTime = lastAccessTime = numBuckets = 0;
-      compressed = false;
-      inputFormat = INPUT_FORMAT;
-      outputFormat = OUTPUT_FORMAT;
-      serdeLib = SERDE_LIB;
+      indexParams = new HashMap<>();
+      createTime = lastAccessTime = 0;
     }
 
     static IndexBuilder get() {
@@ -476,16 +505,6 @@ class UtilsForTests {
       return this;
     }
 
-    IndexBuilder setOrderCols(List<String> orderCols) {
-      this.orderCols = orderCols;
-      return this;
-    }
-
-    IndexBuilder setOrderDir(List<Integer> orderDir) {
-      this.orderDir = orderDir;
-      return this;
-    }
-
     IndexBuilder setIndexName(String indexName) {
       this.indexName = indexName;
       return this;
@@ -506,20 +525,34 @@ class UtilsForTests {
       return this;
     }
 
+    IndexBuilder setSortCols(List<Order> sortCols) {
+      this.sortCols = sortCols;
+      return this;
+    }
+
+    IndexBuilder setSkewedColNames(List<String> skewedColNames) {
+      this.skewedColNames = skewedColNames;
+      return this;
+    }
+
+    IndexBuilder setSkewedColsValues(List<List<String>> skewedColsValues) {
+      this.skewedColValues = skewedColsValues;
+      return this;
+
+    }
+
+    IndexBuilder setSkewedColValueLocationMaps(Map<List<String>,String> skewedColValueLocationMaps) {
+      this.skewedColValueLocationMaps = skewedColValueLocationMaps;
+      return this;
+    }
+
     Index build() {
-      SerDeInfo serdeInfo = new SerDeInfo(serdeName, serdeLib, serdeParams);
-      List<Order> sortCols = null;
-      if (orderCols != null && orderCols.size() > 0) {
-        assert orderCols.size() == orderDir.size();
-        sortCols = new ArrayList<>(orderCols.size());
-        for (int i = 0; i < orderCols.size(); i++) {
-          sortCols.add(new Order(orderCols.get(i), orderDir.get(i)));
-        }
-      }
-      StorageDescriptor sd = new StorageDescriptor(cols, location, inputFormat, outputFormat,
-          compressed, numBuckets, serdeInfo, bucketCols, sortCols, storageDescriptorParams);
+      assert dbName != null : "dbName must be set";
+      assert tableName != null : "tableName must be set";
+      assert indexName != null : "indexName must be set";
+      assert indexTableName != null : "indexTableName must be set";
       return new Index(indexName, handlerClass, dbName, tableName, createTime, lastAccessTime,
-          indexTableName, sd, indexParams, deferredRebuild);
+          indexTableName, buildSd(), indexParams, deferredRebuild);
     }
   }
 }

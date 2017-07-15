@@ -3975,6 +3975,7 @@ public class MetaStoreServer extends ThriftHiveMetastore {
         ex = e;
         throw new InvalidOperationException(e.getMessage());
       } catch (Exception e) {
+        LOG.error("Caught exception", e);
         ex = e;
         if (e instanceof MetaException) {
           throw (MetaException) e;
