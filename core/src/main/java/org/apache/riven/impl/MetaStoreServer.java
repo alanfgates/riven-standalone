@@ -1537,6 +1537,7 @@ public class MetaStoreServer extends ThriftHiveMetastore {
         success = true;
       } catch (NoSuchObjectException e) {
         ex = e;
+        LOG.error("Caught no such object exception trying to create a table", e);
         throw new InvalidObjectException(e.getMessage());
       } catch (Exception e) {
         ex = e;

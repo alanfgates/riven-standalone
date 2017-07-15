@@ -25,7 +25,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -90,7 +89,6 @@ import org.apache.riven.api.StringColumnStatsData;
 import org.apache.riven.api.Table;
 import org.apache.riven.api.Type;
 import org.apache.riven.api.UnknownDBException;
-import org.apache.riven.api.metastoreConstants;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.thrift.TException;
 import org.junit.Test;
@@ -106,10 +104,6 @@ import static org.junit.Assert.fail;
 
 public abstract class TestMetastore {
   private static final Logger LOG = LoggerFactory.getLogger(TestMetastore.class);
-
-  private static final String SERDE_LIB = "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe";
-  private static final String INPUT_FORMAT = "org.apache.hadoop.hive.ql.io.HiveInputFormat";
-  private static final String OUTPUT_FORMAT = "org.apache.hadoop.hive.ql.io.HiveOutputFormat";
 
   protected static MetaStoreClient client;
   protected static Configuration conf;
@@ -228,9 +222,9 @@ public abstract class TestMetastore {
           .put(ColumnType.SERIALIZATION_FORMAT, "1");
       sd.setSortCols(new ArrayList<Order>());
       sd.setStoredAsSubDirectories(false);
-      sd.getSerdeInfo().setSerializationLib(SERDE_LIB);
-      sd.setInputFormat(INPUT_FORMAT);
-      sd.setOutputFormat(OUTPUT_FORMAT);
+      sd.getSerdeInfo().setSerializationLib(UtilsForTests.SERDE_LIB);
+      sd.setInputFormat(UtilsForTests.INPUT_FORMAT);
+      sd.setOutputFormat(UtilsForTests.OUTPUT_FORMAT);
 
       //skewed information
       SkewedInfo skewInfor = new SkewedInfo();
@@ -719,9 +713,9 @@ public abstract class TestMetastore {
     sd.getSerdeInfo().setParameters(new HashMap<String, String>());
     sd.getSerdeInfo().getParameters()
         .put(ColumnType.SERIALIZATION_FORMAT, "1");
-    sd.getSerdeInfo().setSerializationLib(SERDE_LIB);
-    sd.setInputFormat(INPUT_FORMAT);
-    sd.setOutputFormat(OUTPUT_FORMAT);
+    sd.getSerdeInfo().setSerializationLib(UtilsForTests.SERDE_LIB);
+    sd.setInputFormat(UtilsForTests.INPUT_FORMAT);
+    sd.setOutputFormat(UtilsForTests.OUTPUT_FORMAT);
     sd.setSortCols(new ArrayList<Order>());
 
     client.createTable(tbl);
@@ -833,9 +827,9 @@ public abstract class TestMetastore {
       sd.getSerdeInfo().setParameters(new HashMap<String, String>());
       sd.getSerdeInfo().getParameters()
           .put(ColumnType.SERIALIZATION_FORMAT, "1");
-      sd.getSerdeInfo().setSerializationLib(SERDE_LIB);
-      sd.setInputFormat(INPUT_FORMAT);
-      sd.setOutputFormat(OUTPUT_FORMAT);
+      sd.getSerdeInfo().setSerializationLib(UtilsForTests.SERDE_LIB);
+      sd.setInputFormat(UtilsForTests.INPUT_FORMAT);
+      sd.setOutputFormat(UtilsForTests.OUTPUT_FORMAT);
       sd.setSortCols(new ArrayList<>());
 
       tbl.setPartitionKeys(new ArrayList<>(2));
@@ -933,9 +927,9 @@ public abstract class TestMetastore {
       sd.getSerdeInfo().setParameters(new HashMap<String, String>());
       sd.getSerdeInfo().getParameters()
           .put(ColumnType.SERIALIZATION_FORMAT, "1");
-      sd.getSerdeInfo().setSerializationLib(SERDE_LIB);
-      sd.setInputFormat(INPUT_FORMAT);
-      sd.setOutputFormat(OUTPUT_FORMAT);
+      sd.getSerdeInfo().setSerializationLib(UtilsForTests.SERDE_LIB);
+      sd.setInputFormat(UtilsForTests.INPUT_FORMAT);
+      sd.setOutputFormat(UtilsForTests.OUTPUT_FORMAT);
       sd.setSortCols(new ArrayList<Order>());
 
       tbl.setPartitionKeys(new ArrayList<FieldSchema>(2));
@@ -1322,9 +1316,9 @@ public abstract class TestMetastore {
       sd.getSerdeInfo().setName(tbl.getTableName());
       sd.getSerdeInfo().setParameters(new HashMap<String, String>());
       sd.getSerdeInfo().getParameters().put(ColumnType.SERIALIZATION_FORMAT, "1");
-      sd.getSerdeInfo().setSerializationLib(SERDE_LIB);
-      sd.setInputFormat(INPUT_FORMAT);
-      sd.setInputFormat(OUTPUT_FORMAT);
+      sd.getSerdeInfo().setSerializationLib(UtilsForTests.SERDE_LIB);
+      sd.setInputFormat(UtilsForTests.INPUT_FORMAT);
+      sd.setInputFormat(UtilsForTests.OUTPUT_FORMAT);
 
       tbl.setPartitionKeys(new ArrayList<FieldSchema>());
 
@@ -1743,9 +1737,9 @@ public abstract class TestMetastore {
       sd.getSerdeInfo().setParameters(new HashMap<String, String>());
       sd.getSerdeInfo().getParameters().put(
           ColumnType.SERIALIZATION_FORMAT, "1");
-      sd.getSerdeInfo().setSerializationLib(SERDE_LIB);
-      sd.setInputFormat(INPUT_FORMAT);
-      sd.setOutputFormat(OUTPUT_FORMAT);
+      sd.getSerdeInfo().setSerializationLib(UtilsForTests.SERDE_LIB);
+      sd.setInputFormat(UtilsForTests.INPUT_FORMAT);
+      sd.setOutputFormat(UtilsForTests.OUTPUT_FORMAT);
       
       boolean failed = false;
       try {
@@ -1915,9 +1909,9 @@ public abstract class TestMetastore {
       sd.getSerdeInfo().setParameters(new HashMap<String, String>());
       sd.getSerdeInfo().getParameters().put(
           ColumnType.SERIALIZATION_FORMAT, "9");
-      sd.getSerdeInfo().setSerializationLib(SERDE_LIB);
-      sd.setInputFormat(INPUT_FORMAT);
-      sd.setOutputFormat(OUTPUT_FORMAT);
+      sd.getSerdeInfo().setSerializationLib(UtilsForTests.SERDE_LIB);
+      sd.setInputFormat(UtilsForTests.INPUT_FORMAT);
+      sd.setOutputFormat(UtilsForTests.OUTPUT_FORMAT);
       
       tbl.setPartitionKeys(new ArrayList<FieldSchema>(2));
       tbl.getPartitionKeys().add(
@@ -2011,9 +2005,9 @@ public abstract class TestMetastore {
       sd.setParameters(new HashMap<String, String>());
       sd.getSerdeInfo().getParameters().put(
           ColumnType.SERIALIZATION_FORMAT, "9");
-      sd.getSerdeInfo().setSerializationLib(SERDE_LIB);
-      sd.setInputFormat(INPUT_FORMAT);
-      sd.setOutputFormat(OUTPUT_FORMAT);
+      sd.getSerdeInfo().setSerializationLib(UtilsForTests.SERDE_LIB);
+      sd.setInputFormat(UtilsForTests.INPUT_FORMAT);
+      sd.setOutputFormat(UtilsForTests.OUTPUT_FORMAT);
 
       tbl.setSd(sd);
       tbl.getSd().setCols(cols);
@@ -2129,9 +2123,9 @@ public abstract class TestMetastore {
     sd.getSerdeInfo().setParameters(new HashMap<String, String>());
     sd.getSerdeInfo().getParameters()
         .put(ColumnType.SERIALIZATION_FORMAT, "1");
-    sd.getSerdeInfo().setSerializationLib(SERDE_LIB);
-    sd.setInputFormat(INPUT_FORMAT);
-    sd.setOutputFormat(OUTPUT_FORMAT);
+    sd.getSerdeInfo().setSerializationLib(UtilsForTests.SERDE_LIB);
+    sd.setInputFormat(UtilsForTests.INPUT_FORMAT);
+    sd.setOutputFormat(UtilsForTests.OUTPUT_FORMAT);
     sd.setSortCols(new ArrayList<Order>());
 
     tbl.setPartitionKeys(partCols);
@@ -2323,9 +2317,9 @@ public abstract class TestMetastore {
       sd.getSerdeInfo().setParameters(new HashMap<String, String>());
       sd.getSerdeInfo().getParameters()
           .put(ColumnType.SERIALIZATION_FORMAT, "1");
-      sd.getSerdeInfo().setSerializationLib(SERDE_LIB);
-      sd.setInputFormat(INPUT_FORMAT);
-      sd.setOutputFormat(OUTPUT_FORMAT);
+      sd.getSerdeInfo().setSerializationLib(UtilsForTests.SERDE_LIB);
+      sd.setInputFormat(UtilsForTests.INPUT_FORMAT);
+      sd.setOutputFormat(UtilsForTests.OUTPUT_FORMAT);
       sd.setSortCols(new ArrayList<Order>());
 
       tbl.setPartitionKeys(partCols);
@@ -3064,9 +3058,9 @@ public abstract class TestMetastore {
     sd.getSerdeInfo().getParameters()
         .put(ColumnType.SERIALIZATION_FORMAT, "1");
     sd.setSortCols(new ArrayList<Order>());
-    sd.getSerdeInfo().setSerializationLib(SERDE_LIB);
-    sd.setInputFormat(INPUT_FORMAT);
-    sd.setOutputFormat(OUTPUT_FORMAT);
+    sd.getSerdeInfo().setSerializationLib(UtilsForTests.SERDE_LIB);
+    sd.setInputFormat(UtilsForTests.INPUT_FORMAT);
+    sd.setOutputFormat(UtilsForTests.OUTPUT_FORMAT);
     
     return sd;
   }
@@ -3329,9 +3323,9 @@ public abstract class TestMetastore {
       sd.getSerdeInfo().setParameters(new HashMap<String, String>());
       sd.getSerdeInfo().getParameters()
           .put(ColumnType.SERIALIZATION_FORMAT, "1");
-      sd.getSerdeInfo().setSerializationLib(SERDE_LIB);
-      sd.setInputFormat(INPUT_FORMAT);
-      sd.setOutputFormat(OUTPUT_FORMAT);
+      sd.getSerdeInfo().setSerializationLib(UtilsForTests.SERDE_LIB);
+      sd.setInputFormat(UtilsForTests.INPUT_FORMAT);
+      sd.setOutputFormat(UtilsForTests.OUTPUT_FORMAT);
       sd.setSortCols(new ArrayList<Order>());
 
       client.createTable(tbl);
