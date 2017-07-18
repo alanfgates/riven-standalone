@@ -24,6 +24,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.riven.api.FieldSchema;
 import org.apache.riven.api.NoSuchObjectException;
 import org.apache.riven.client.MetaStoreClient;
+import org.apache.riven.client.builder.DatabaseBuilder;
+import org.apache.riven.client.builder.TableBuilder;
 import org.apache.riven.conf.MetastoreConf;
 import org.apache.riven.conf.MetastoreConf.ConfVars;
 import org.apache.riven.impl.MetaStoreEndFunctionContext;
@@ -70,7 +72,7 @@ public class TestMetaStoreEndFunctionListener {
     String tblName = "tmptbl";
     int listSize = 0;
 
-    msc.createDatabase(UtilsForTests.DatabaseBuilder.get()
+    msc.createDatabase(new DatabaseBuilder()
         .setName(dbName)
         .build()
     );
@@ -90,7 +92,7 @@ public class TestMetaStoreEndFunctionListener {
     Assert.assertTrue((e instanceof NoSuchObjectException));
     Assert.assertEquals(context.getInputTableName(), null);
 
-    msc.createTable(UtilsForTests.TableBuilder.get()
+    msc.createTable(new TableBuilder()
         .setDbName(dbName)
         .setTableName(tblName)
         .setCols(Collections.singletonList(new FieldSchema("a", "string", "")))

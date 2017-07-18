@@ -18,7 +18,6 @@
 
 package org.apache.riven;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,6 +28,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.riven.api.FieldSchema;
 import org.apache.riven.client.MetaStoreClient;
+import org.apache.riven.client.builder.DatabaseBuilder;
+import org.apache.riven.client.builder.TableBuilder;
 import org.apache.riven.conf.MetastoreConf;
 import org.apache.riven.conf.MetastoreConf.ConfVars;
 import org.apache.riven.impl.RetryingHMSHandler;
@@ -69,7 +70,7 @@ public class TestRetryingHMSHandler {
     String dbName = "hive4159";
     String tblName = "tmptbl";
 
-    msc.createDatabase(UtilsForTests.DatabaseBuilder.get()
+    msc.createDatabase(new DatabaseBuilder()
         .setName(dbName)
         .build());
 
@@ -87,7 +88,7 @@ public class TestRetryingHMSHandler {
     serdParams.put(ColumnType.SERIALIZATION_FORMAT, "1");
 
 
-    msc.createTable(UtilsForTests.TableBuilder.get()
+    msc.createTable(new TableBuilder()
         .setDbName(dbName)
         .setTableName(tblName)
         .setCols(cols)

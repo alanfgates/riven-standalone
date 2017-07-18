@@ -20,6 +20,9 @@ package org.apache.riven;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.riven.api.FieldSchema;
 import org.apache.riven.client.MetaStoreClient;
+import org.apache.riven.client.builder.DatabaseBuilder;
+import org.apache.riven.client.builder.PartitionBuilder;
+import org.apache.riven.client.builder.TableBuilder;
 import org.apache.riven.conf.MetastoreConf;
 import org.apache.riven.conf.MetastoreConf.ConfVars;
 import org.apache.riven.metrics.Metrics;
@@ -80,7 +83,7 @@ public class TestMetaStoreMetrics {
 
     //1 databases created
     String db1 = "testdb1";
-    msc.createDatabase(UtilsForTests.DatabaseBuilder.get()
+    msc.createDatabase(new DatabaseBuilder()
         .setName(db1)
         .build()
     );
@@ -91,26 +94,26 @@ public class TestMetaStoreMetrics {
     List<FieldSchema> cols = Collections.singletonList(new FieldSchema("key", "string", ""));
     List<FieldSchema> partCols = Collections.singletonList(new FieldSchema("partkey", "string", ""));
 
-    msc.createTable(UtilsForTests.TableBuilder.get()
+    msc.createTable(new TableBuilder()
         .setDbName("default")
         .setTableName(table1)
         .setCols(cols)
         .build()
     );
-    msc.createTable(UtilsForTests.TableBuilder.get()
+    msc.createTable(new TableBuilder()
         .setDbName("default")
         .setTableName(parttbl3)
         .setCols(cols)
         .setPartCols(partCols)
         .build()
     );
-    msc.createTable(UtilsForTests.TableBuilder.get()
+    msc.createTable(new TableBuilder()
         .setDbName(db1)
         .setTableName(table2)
         .setCols(cols)
         .build()
     );
-    msc.createTable(UtilsForTests.TableBuilder.get()
+    msc.createTable(new TableBuilder()
         .setDbName(db1)
         .setTableName(parttbl4)
         .setCols(cols)
@@ -119,42 +122,42 @@ public class TestMetaStoreMetrics {
     );
 
     //6 partitions
-    msc.add_partition(UtilsForTests.PartitionBuilder.get()
+    msc.add_partition(new PartitionBuilder()
         .setDbName("default")
         .setTableName(parttbl3)
         .setCols(cols)
         .setValues(Collections.singletonList("a"))
         .build()
     );
-    msc.add_partition(UtilsForTests.PartitionBuilder.get()
+    msc.add_partition(new PartitionBuilder()
         .setDbName("default")
         .setTableName(parttbl3)
         .setCols(cols)
         .setValues(Collections.singletonList("b"))
         .build()
     );
-    msc.add_partition(UtilsForTests.PartitionBuilder.get()
+    msc.add_partition(new PartitionBuilder()
         .setDbName("default")
         .setTableName(parttbl3)
         .setCols(cols)
         .setValues(Collections.singletonList("c"))
         .build()
     );
-    msc.add_partition(UtilsForTests.PartitionBuilder.get()
+    msc.add_partition(new PartitionBuilder()
         .setDbName(db1)
         .setTableName(parttbl4)
         .setCols(cols)
         .setValues(Collections.singletonList("a"))
         .build()
     );
-    msc.add_partition(UtilsForTests.PartitionBuilder.get()
+    msc.add_partition(new PartitionBuilder()
         .setDbName(db1)
         .setTableName(parttbl4)
         .setCols(cols)
         .setValues(Collections.singletonList("b"))
         .build()
     );
-    msc.add_partition(UtilsForTests.PartitionBuilder.get()
+    msc.add_partition(new PartitionBuilder()
         .setDbName(db1)
         .setTableName(parttbl4)
         .setCols(cols)
@@ -164,20 +167,20 @@ public class TestMetaStoreMetrics {
 
     //create and drop some additional metadata, to test drop counts.
     String tmpDb = "tempdb";
-    msc.createDatabase(UtilsForTests.DatabaseBuilder.get()
+    msc.createDatabase(new DatabaseBuilder()
         .setName(tmpDb)
         .build()
     );
 
     String delTable = "delete_by_table";
-    msc.createTable(UtilsForTests.TableBuilder.get()
+    msc.createTable(new TableBuilder()
         .setDbName(tmpDb)
         .setTableName(delTable)
         .setCols(cols)
         .setPartCols(partCols)
         .build()
     );
-    msc.add_partition(UtilsForTests.PartitionBuilder.get()
+    msc.add_partition(new PartitionBuilder()
         .setDbName(tmpDb)
         .setTableName(delTable)
         .setCols(cols)
@@ -187,14 +190,14 @@ public class TestMetaStoreMetrics {
     msc.dropTable(tmpDb, delTable);
 
     delTable = "delete_by_part";
-    msc.createTable(UtilsForTests.TableBuilder.get()
+    msc.createTable(new TableBuilder()
         .setDbName(tmpDb)
         .setTableName(delTable)
         .setCols(cols)
         .setPartCols(partCols)
         .build()
     );
-    msc.add_partition(UtilsForTests.PartitionBuilder.get()
+    msc.add_partition(new PartitionBuilder()
         .setDbName(tmpDb)
         .setTableName(delTable)
         .setCols(cols)
@@ -204,14 +207,14 @@ public class TestMetaStoreMetrics {
     msc.dropPartition(tmpDb, delTable, Collections.singletonList("temp"));
 
     delTable = "drop_by_db";
-    msc.createTable(UtilsForTests.TableBuilder.get()
+    msc.createTable(new TableBuilder()
         .setDbName(tmpDb)
         .setTableName(delTable)
         .setCols(cols)
         .setPartCols(partCols)
         .build()
     );
-    msc.add_partition(UtilsForTests.PartitionBuilder.get()
+    msc.add_partition(new PartitionBuilder()
         .setDbName(tmpDb)
         .setTableName(delTable)
         .setCols(cols)

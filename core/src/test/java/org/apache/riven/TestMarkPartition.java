@@ -28,6 +28,9 @@ import org.apache.riven.api.InvalidPartitionException;
 import org.apache.riven.api.PartitionEventType;
 import org.apache.riven.api.UnknownTableException;
 import org.apache.riven.client.MetaStoreClient;
+import org.apache.riven.client.builder.DatabaseBuilder;
+import org.apache.riven.client.builder.PartitionBuilder;
+import org.apache.riven.client.builder.TableBuilder;
 import org.apache.riven.conf.MetastoreConf;
 import org.apache.thrift.TException;
 import org.junit.After;
@@ -53,19 +56,19 @@ public class TestMarkPartition {
   public void testMarkingPartitionSet() throws TException, InterruptedException {
 
     msc = new MetaStoreClient(conf);
-    msc.createDatabase(UtilsForTests.DatabaseBuilder.get()
+    msc.createDatabase(new DatabaseBuilder()
         .setName(dbName)
         .build()
     );
     String tableName = "tmptbl";
-    msc.createTable(UtilsForTests.TableBuilder.get()
+    msc.createTable(new TableBuilder()
         .setDbName(dbName)
         .setTableName(tableName)
         .setCols(Collections.singletonList(new FieldSchema("a", "string", "")))
         .setPartCols(Collections.singletonList(new FieldSchema("b", "string", "")))
         .build()
     );
-    msc.add_partition(UtilsForTests.PartitionBuilder.get()
+    msc.add_partition(new PartitionBuilder()
         .setDbName(dbName)
         .setTableName(tableName)
         .setValues(Collections.singletonList("2011"))

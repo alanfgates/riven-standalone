@@ -36,6 +36,8 @@ import org.apache.riven.api.StorageDescriptor;
 import org.apache.riven.api.StringColumnStatsData;
 import org.apache.riven.api.Table;
 import org.apache.riven.client.MetaStoreClient;
+import org.apache.riven.client.builder.DatabaseBuilder;
+import org.apache.riven.client.builder.TableBuilder;
 import org.apache.riven.conf.MetastoreConf;
 import org.apache.riven.conf.MetastoreConf.ConfVars;
 import org.apache.riven.listeners.events.CreateDatabaseEvent;
@@ -51,8 +53,8 @@ public class TestMetastoreStatsMerge {
 
   private Configuration conf;
   private MetaStoreClient msc;
-  private final Database db = new Database();
-  private Table table = new Table();
+  private Database db;
+  private Table table;
 
   private static final String dbName = "hive3253";
   private static final String tblName = "tmptbl";
@@ -73,29 +75,24 @@ public class TestMetastoreStatsMerge {
 
     msc.dropDatabase(dbName, true, true);
 
-    db.setName(dbName);
+    db = new DatabaseBuilder()
+        .setName(dbName)
+        .build();
 
     Map<String, String> tableParams = new HashMap<>();
     tableParams.put("a", "string");
 
     List<FieldSchema> cols = new ArrayList<>();
     cols.add(new FieldSchema("a", "string", ""));
-    StorageDescriptor sd = new StorageDescriptor();
-    sd.setCols(cols);
-    sd.setCompressed(false);
-    sd.setParameters(tableParams);
-    sd.setSerdeInfo(new SerDeInfo());
-    sd.getSerdeInfo().setName(tblName);
-    sd.getSerdeInfo().setParameters(new HashMap<>());
-    sd.getSerdeInfo().getParameters().put(ColumnType.SERIALIZATION_FORMAT, "1");
-    sd.getSerdeInfo().setSerializationLib(UtilsForTests.SERDE_LIB);
-    sd.setInputFormat(UtilsForTests.INPUT_FORMAT);
-    sd.setOutputFormat(UtilsForTests.OUTPUT_FORMAT);
 
-    table.setDbName(dbName);
-    table.setTableName(tblName);
-    table.setParameters(tableParams);
-    table.setSd(sd);
+    table = new TableBuilder()
+        .setDbName(dbName)
+        .setTableName(tblName)
+        .setTableParams(tableParams)
+        .setCols(cols)
+        .setStorageDescriptorParams(tableParams)
+        .setSerdeName(tblName)
+        .build();
 
     DummyListener.notifyList.clear();
   }

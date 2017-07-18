@@ -32,6 +32,9 @@ import org.apache.riven.api.SerDeInfo;
 import org.apache.riven.api.StorageDescriptor;
 import org.apache.riven.api.Table;
 import org.apache.riven.client.MetaStoreClient;
+import org.apache.riven.client.builder.DatabaseBuilder;
+import org.apache.riven.client.builder.PartitionBuilder;
+import org.apache.riven.client.builder.TableBuilder;
 import org.apache.riven.conf.MetastoreConf;
 import org.apache.riven.conf.MetastoreConf.ConfVars;
 import org.apache.riven.listeners.events.AddPartitionEvent;
@@ -57,9 +60,9 @@ public class TestMetastoreWithEnvironmentContext {
   private Configuration conf;
   private MetaStoreClient msc;
   private EnvironmentContext envContext;
-  private final Database db = new Database();
-  private Table table = new Table();
-  private final Partition partition = new Partition();
+  private Database db;
+  private Table table;
+  private Partition partition;
 
   private static final String dbName = "hive3252";
   private static final String tblName = "tmptbl";
@@ -84,7 +87,9 @@ public class TestMetastoreWithEnvironmentContext {
     envProperties.put("hadoop.job.ugi", "test_user");
     envContext = new EnvironmentContext(envProperties);
 
-    db.setName(dbName);
+    db = new DatabaseBuilder()
+        .setName(dbName)
+        .build();
 
     Map<String, String> tableParams = new HashMap<>();
     tableParams.put("a", "string");
@@ -94,31 +99,27 @@ public class TestMetastoreWithEnvironmentContext {
     List<FieldSchema> cols = new ArrayList<>();
     cols.add(new FieldSchema("a", "string", ""));
     cols.add(new FieldSchema("b", "string", ""));
-    StorageDescriptor sd = new StorageDescriptor();
-    sd.setCols(cols);
-    sd.setCompressed(false);
-    sd.setParameters(tableParams);
-    sd.setSerdeInfo(new SerDeInfo());
-    sd.getSerdeInfo().setName(tblName);
-    sd.getSerdeInfo().setParameters(new HashMap<>());
-    sd.getSerdeInfo().getParameters().put(ColumnType.SERIALIZATION_FORMAT, "1");
-    sd.getSerdeInfo().setSerializationLib(UtilsForTests.SERDE_LIB);
-    sd.setInputFormat(UtilsForTests.INPUT_FORMAT);
-    sd.setOutputFormat(UtilsForTests.OUTPUT_FORMAT);
-
-    table.setDbName(dbName);
-    table.setTableName(tblName);
-    table.setParameters(tableParams);
-    table.setPartitionKeys(partitionKeys);
-    table.setSd(sd);
+    table = new TableBuilder()
+        .setDbName(dbName)
+        .setTableName(tblName)
+        .setTableParams(tableParams)
+        .setPartCols(partitionKeys)
+        .setCols(cols)
+        .setStorageDescriptorParams(tableParams)
+        .setSerdeName(tblName)
+        .build();
 
     List<String> partValues = new ArrayList<>();
     partValues.add("2011");
-    partition.setDbName(dbName);
-    partition.setTableName(tblName);
-    partition.setValues(partValues);
-    partition.setSd(table.getSd().deepCopy());
-    partition.getSd().setSerdeInfo(table.getSd().getSerdeInfo().deepCopy());
+
+    partition = new PartitionBuilder()
+        .setDbName(dbName)
+        .setTableName(tblName)
+        .setValues(partValues)
+        .setCols(cols)
+        .setStorageDescriptorParams(tableParams)
+        .setSerdeName(tblName)
+        .build();
 
     DummyListener.notifyList.clear();
   }

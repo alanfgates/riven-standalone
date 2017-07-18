@@ -24,6 +24,9 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.riven.api.FieldSchema;
 import org.apache.riven.client.MetaStoreClient;
+import org.apache.riven.client.builder.DatabaseBuilder;
+import org.apache.riven.client.builder.PartitionBuilder;
+import org.apache.riven.client.builder.TableBuilder;
 import org.apache.riven.conf.MetastoreConf;
 import org.apache.riven.conf.MetastoreConf.ConfVars;
 import org.apache.riven.listeners.events.ListenerEvent;
@@ -68,7 +71,7 @@ public class TestMetaStoreEventListenerOnlyOnCommit {
     Assert.assertEquals(notifyList.size(), listSize);
 
     String dbName = "tmpDb";
-    msc.createDatabase(UtilsForTests.DatabaseBuilder.get()
+    msc.createDatabase(new DatabaseBuilder()
         .setName(dbName)
         .build()
     );
@@ -79,7 +82,7 @@ public class TestMetaStoreEventListenerOnlyOnCommit {
 
     String tableName = "unittest_TestMetaStoreEventListenerOnlyOnCommit";
     List<FieldSchema> cols = Collections.singletonList(new FieldSchema("id", "int", ""));
-    msc.createTable(UtilsForTests.TableBuilder.get()
+    msc.createTable(new TableBuilder()
         .setDbName(dbName)
         .setTableName(tableName)
         .setCols(cols)
@@ -91,7 +94,7 @@ public class TestMetaStoreEventListenerOnlyOnCommit {
     Assert.assertEquals(notifyList.size(), listSize);
     Assert.assertTrue(DummyListener.getLastEvent().getStatus());
 
-    msc.add_partition(UtilsForTests.PartitionBuilder.get()
+    msc.add_partition(new PartitionBuilder()
         .setDbName(dbName)
         .setTableName(tableName)
         .setCols(cols)
@@ -105,7 +108,7 @@ public class TestMetaStoreEventListenerOnlyOnCommit {
 
     DummyRawStoreControlledCommit.setCommitSucceed(false);
 
-    msc.add_partition(UtilsForTests.PartitionBuilder.get()
+    msc.add_partition(new PartitionBuilder()
         .setDbName(dbName)
         .setTableName(tableName)
         .setCols(cols)

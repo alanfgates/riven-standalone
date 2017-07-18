@@ -36,6 +36,10 @@ import org.apache.riven.api.Partition;
 import org.apache.riven.api.PartitionEventType;
 import org.apache.riven.api.Table;
 import org.apache.riven.client.MetaStoreClient;
+import org.apache.riven.client.builder.DatabaseBuilder;
+import org.apache.riven.client.builder.IndexBuilder;
+import org.apache.riven.client.builder.PartitionBuilder;
+import org.apache.riven.client.builder.TableBuilder;
 import org.apache.riven.conf.MetastoreConf;
 import org.apache.riven.conf.MetastoreConf.ConfVars;
 import org.apache.riven.listeners.MetaStoreEventListener;
@@ -220,7 +224,7 @@ public class TestMetaStoreEventListener {
     Assert.assertEquals(notifyList.size(), listSize);
     Assert.assertEquals(preNotifyList.size(), listSize);
 
-    msc.createDatabase(UtilsForTests.DatabaseBuilder.get()
+    msc.createDatabase(new DatabaseBuilder()
         .setName(dbName)
         .build()
     );
@@ -235,7 +239,7 @@ public class TestMetaStoreEventListener {
     assert dbEvent.getStatus();
     validateCreateDb(db, dbEvent.getDatabase());
 
-    msc.createTable(UtilsForTests.TableBuilder.get()
+    msc.createTable(new TableBuilder()
         .setDbName(dbName)
         .setTableName(tblName)
         .setCols(Collections.singletonList(new FieldSchema("a", "string", "")))
@@ -253,7 +257,7 @@ public class TestMetaStoreEventListener {
     validateCreateTable(tbl, tblEvent.getTable());
 
     String indexName = "tmptbl_i";
-    Table indexTable = UtilsForTests.TableBuilder.get()
+    Table indexTable = new TableBuilder()
         .setDbName(dbName)
         .setTableName(indexName + tblName)
         .setCols(Collections.singletonList(new FieldSchema("a", "string", "")))
@@ -261,7 +265,7 @@ public class TestMetaStoreEventListener {
     Map<String, String> indexProperties = new HashMap<>();
     indexProperties.put("prop1", "val1");
     indexProperties.put("prop2", "val2");
-    Index index = UtilsForTests.IndexBuilder.get()
+    Index index = new IndexBuilder()
         .setIndexName(indexName)
         .setDbName(dbName)
         .setTableName(tblName)
@@ -313,7 +317,7 @@ public class TestMetaStoreEventListener {
     PreDropIndexEvent preDropIndexEvent = (PreDropIndexEvent) (preNotifyList.get(preNotifyList.size() - 1));
     validateDropIndex(newIndex, preDropIndexEvent.getIndex());
 
-    msc.add_partition(UtilsForTests.PartitionBuilder.get()
+    msc.add_partition(new PartitionBuilder()
         .setDbName(dbName)
         .setTableName(tblName)
         .setValues(Collections.singletonList("2011"))

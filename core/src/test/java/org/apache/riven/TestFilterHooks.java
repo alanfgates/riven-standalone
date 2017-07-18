@@ -37,6 +37,10 @@ import org.apache.riven.api.PartitionSpec;
 import org.apache.riven.api.Table;
 import org.apache.riven.client.DefaultMetaStoreFilterHookImpl;
 import org.apache.riven.client.MetaStoreClient;
+import org.apache.riven.client.builder.DatabaseBuilder;
+import org.apache.riven.client.builder.IndexBuilder;
+import org.apache.riven.client.builder.PartitionBuilder;
+import org.apache.riven.client.builder.TableBuilder;
 import org.apache.riven.conf.MetastoreConf;
 import org.apache.riven.conf.MetastoreConf.ConfVars;
 import org.apache.riven.security.HadoopThriftAuthBridge;
@@ -179,42 +183,42 @@ public class TestFilterHooks {
 
     msc = new MetaStoreClient(conf);
 
-    msc.createDatabase(UtilsForTests.DatabaseBuilder.get()
+    msc.createDatabase(new DatabaseBuilder()
         .setName(DBNAME1)
         .build());
-    msc.createDatabase(UtilsForTests.DatabaseBuilder.get()
+    msc.createDatabase(new DatabaseBuilder()
         .setName(DBNAME2)
         .build());
-    Table tab1 = UtilsForTests.TableBuilder.get()
+    Table tab1 = new TableBuilder()
         .setDbName(DBNAME1)
         .setTableName(TAB1)
         .setCols(Arrays.asList(new FieldSchema("id", "int", ""), new FieldSchema("name", "string", "")))
         .build();
     msc.createTable(tab1);
-    msc.createTable(UtilsForTests.TableBuilder.get()
+    msc.createTable(new TableBuilder()
         .setDbName(DBNAME1)
         .setTableName(TAB2)
         .setCols(Collections.singletonList(new FieldSchema("id", "int", "")))
         .setPartCols(Collections.singletonList(new FieldSchema("name", "string", "")))
         .build());
-    msc.add_partition(UtilsForTests.PartitionBuilder.get()
+    msc.add_partition(new PartitionBuilder()
         .setDbName(DBNAME1)
         .setTableName(TAB2)
         .setValues(Collections.singletonList("value1"))
         .setCols(Collections.singletonList(new FieldSchema("id", "int", "")))
         .build());
-    msc.add_partition(UtilsForTests.PartitionBuilder.get()
+    msc.add_partition(new PartitionBuilder()
         .setDbName(DBNAME1)
         .setTableName(TAB2)
         .setValues(Collections.singletonList("value2"))
         .setCols(Collections.singletonList(new FieldSchema("id", "int", "")))
         .build());
-    Table indexTable = UtilsForTests.TableBuilder.get()
+    Table indexTable = new TableBuilder()
         .setDbName(DBNAME1)
         .setTableName(INDEX1 + "_" + TAB1)
         .setCols(Collections.singletonList(new FieldSchema("id", "int", "")))
         .build();
-    msc.createIndex(UtilsForTests.IndexBuilder.get()
+    msc.createIndex(new IndexBuilder()
         .setDbName(DBNAME1)
         .setTableName(TAB1)
         .setIndexName(INDEX1)
