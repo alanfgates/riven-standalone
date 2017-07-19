@@ -59,7 +59,7 @@ public class CommonCliOptions {
    * Create an instance with common options (help, verbose, etc...).
    *
    * @param cliname the name of the command
-   * @param includeHiveConf include "hiveconf" as an option if true
+   * @param includeHiveConf include "conf" as an option if true
    */
   @SuppressWarnings("static-access")
   public CommonCliOptions(String cliname, boolean includeHiveConf) {
@@ -76,26 +76,26 @@ public class CommonCliOptions {
           .withValueSeparator()
           .hasArgs(2)
           .withArgName("property=value")
-          .withLongOpt("hiveconf")
+          .withLongOpt("conf")
           .withDescription("Use value for given property")
           .create());
     }
   }
 
   /**
-   * Add the hiveconf properties to the Java system properties, override
+   * Add the conf properties to the Java system properties, override
    * anything therein.
    *
-   * @return a copy of the properties specified in hiveconf
+   * @return a copy of the properties specified in conf
    */
   public Properties addHiveconfToSystemProperties() {
-    Properties confProps = commandLine.getOptionProperties("hiveconf");
+    Properties confProps = commandLine.getOptionProperties("conf");
     for (String propKey : confProps.stringPropertyNames()) {
       if (verbose) {
         System.err.println(
-            "hiveconf: " + propKey + "=" + confProps.getProperty(propKey));
+            "conf: " + propKey + "=" + confProps.getProperty(propKey));
       }
-      if (propKey.equalsIgnoreCase("hive.root.logger")) {
+      if (propKey.equalsIgnoreCase("metastore.root.logger")) {
         splitAndSetLogger(propKey, confProps);
       } else {
         System.setProperty(propKey, confProps.getProperty(propKey));
@@ -110,9 +110,9 @@ public class CommonCliOptions {
       String[] tokens = propVal.split(",");
       for (String token : tokens) {
         if (Level.getLevel(token) == null) {
-          System.setProperty("hive.root.logger", token);
+          System.setProperty("metastore.root.logger", token);
         } else {
-          System.setProperty("hive.log.level", token);
+          System.setProperty("metastore.log.level", token);
         }
       }
     } else {

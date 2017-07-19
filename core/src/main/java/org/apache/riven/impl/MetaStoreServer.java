@@ -6989,7 +6989,7 @@ public class MetaStoreServer extends ThriftHiveMetastore {
 
     @SuppressWarnings("static-access")
     public HiveMetastoreCli(Configuration configuration) {
-      super("hivemetastore", true);
+      super("metastore", true);
       this.port = MetastoreConf.getIntVar(configuration, ConfVars.SERVER_PORT);
 
       // -p port

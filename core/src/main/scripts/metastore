@@ -1,0 +1,189 @@
+#!/usr/bin/env bash
+
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+function show_help {
+  echo "Usage: $0 [options] [start|stop|restart]"
+  echo "options:"
+  echo "\t--config metastore_conf_directory"
+  echo "\t--auxpath path_to_auxiliary_jars"
+  echo "Environment variables that affect execution:"
+  echo "\tMETASTORE_HOME - home for libraries and config files, parent of the directory this binary is in if not set"
+  echo "\tMETASTORE_CONF_DIR - directory for config files, METASTORE_HOME/conf if not set"
+  echo "\tMETASTORE_AUX_JARS_PATH - path to auxiliary jars to include when running the metastore"
+  echo "\tHADOOP_HOME - path to Hadoop"
+}
+
+function stop_metastore {
+  if [ -f $PID_FILE ]
+  then
+    pid=`cat $PID_FILE`
+    kill $pid
+    if [ $? -ne 0 ]
+    then
+        echo "Unable to find process $pid to kill or we lack the permission to kill it"
+    else
+        echo "Termination signal sent to process $pid"
+    fi
+  else
+    echo "No process file found, looked in $PID_FILE"
+  fi
+}
+
+function start_metastore {
+  # Allow alternate conf dir location.
+  METASTORE_CONF_DIR="${METASTORE_CONF_DIR:-$METASTORE_HOME/conf}"
+
+  export METASTORE_CONF_DIR=$METASTORE_CONF_DIR
+  export METASTORE_AUX_JARS_PATH=$METASTORE_AUX_JARS_PATH
+
+  # Default to use 1024MB
+  export HADOOP_HEAPSIZE=${HADOOP_HEAPSIZE:-1024}
+
+  CLASSPATH="${METASTORE_CONF_DIR}"
+
+  METASTORE_LIB=${METASTORE_HOME}/lib
+  METASTORE_JAR=${METASTORE_LIB}/metastore-*.jar
+
+  for f in ${METASTORE_LIB}/*.jar; do
+    CLASSPATH=${CLASSPATH}:$f;
+  done
+
+  # add the auxillary jars such as serdes
+  if [ -d "${METASTORE_AUX_JARS_PATH}" ]; then
+    hive_aux_jars_abspath=`cd ${METASTORE_AUX_JARS_PATH} && pwd`
+    for f in $hive_aux_jars_abspath/*.jar; do
+      if [[ ! -f $f ]]; then
+          continue;
+      fi
+      AUX_CLASSPATH=${AUX_CLASSPATH}:$f
+      if [ "${AUX_PARAM}" == "" ]; then
+          AUX_PARAM=file://$f
+      else
+          AUX_PARAM=${AUX_PARAM},file://$f;
+      fi
+    done
+  elif [ "${METASTORE_AUX_JARS_PATH}" != "" ]; then
+    METASTORE_AUX_JARS_PATH=`echo $METASTORE_AUX_JARS_PATH | sed 's/,/:/g'`
+    AUX_CLASSPATH=${AUX_CLASSPATH}:${METASTORE_AUX_JARS_PATH}
+    AUX_PARAM="file://$(echo ${METASTORE_AUX_JARS_PATH} | sed 's/:/,file:\/\//g')"
+  fi
+
+  CLASSPATH=${CLASSPATH}:${AUX_CLASSPATH}
+
+  # supress the HADOOP_HOME warnings in 1.x.x
+  export HADOOP_HOME_WARN_SUPPRESS=true
+
+  # to make sure log4j2.x and jline jars are loaded ahead of the jars pulled by hadoop
+  export HADOOP_USER_CLASSPATH_FIRST=true
+
+  # pass classpath to hadoop
+  if [ "$HADOOP_CLASSPATH" != "" ]; then
+    export HADOOP_CLASSPATH="${CLASSPATH}:${HADOOP_CLASSPATH}"
+  else
+    export HADOOP_CLASSPATH="$CLASSPATH"
+  fi
+
+  # check for hadoop in the path
+  HADOOP_IN_PATH=`which hadoop 2>/dev/null`
+  if [ -f ${HADOOP_IN_PATH} ]; then
+    HADOOP_DIR=`dirname "$HADOOP_IN_PATH"`/..
+  fi
+  # HADOOP_HOME env variable overrides hadoop in the path
+  HADOOP_HOME=${HADOOP_HOME:-${HADOOP_PREFIX:-$HADOOP_DIR}}
+  if [ "$HADOOP_HOME" == "" ]; then
+    echo "Cannot find hadoop installation: \$HADOOP_HOME or \$HADOOP_PREFIX must be set or hadoop must be in the path";
+    exit 4;
+  fi
+
+  HADOOP=$HADOOP_HOME/bin/hadoop
+  if [ ! -f ${HADOOP} ]; then
+    echo "Cannot find hadoop installation: \$HADOOP_HOME or \$HADOOP_PREFIX must be set or hadoop must be in the path";
+    exit 4;
+  fi
+
+  if [ "${AUX_PARAM}" != "" ]; then
+    AUX_JARS_CMD_LINE="-libjars ${AUX_PARAM}"
+  fi
+
+  # to initialize logging for all services
+  export HADOOP_CLIENT_OPTS="$HADOOP_CLIENT_OPTS -Dlog4j.configurationFile=metastore-log4j2.properties "
+
+  $HADOOP jar $METASTORE_JAR org.apache.riven.impl.MetaStoreServer $@
+}
+
+
+# Resolve a symbolic link to the real script
+this="$0"
+while [ -h "$this" ]; do
+  ls=`ls -ld "$this"`
+  link=`expr "$ls" : '.*-> \(.*\)$'`
+  if expr "$link" : '.*/.*' > /dev/null; then
+    this="$link"
+  else
+    this=`dirname "$this"`/"$link"
+  fi
+done
+
+# convert relative path to absolute path
+bin=`dirname "$this"`
+script=`basename "$this"`
+bin=`cd "$bin"; pwd`
+this="$bin/$script"
+
+# the root of the Hive installation
+if [[ -z $METASTORE_HOME ]] ; then
+  export METASTORE_HOME=`dirname "$bin"`
+fi
+
+export PID_FILE=${METASTORE_HOME}/run/metastore.pid
+
+# Parse the arguments
+while [ $# -gt 0 ]; do    # Until you run out of parameters . . .
+  case "$1" in
+    --config)
+        shift
+        confdir=$1
+        shift
+        export METASTORE_CONF_DIR=$confdir
+        ;;
+    --auxpath)
+        shift
+        export METASTORE_AUX_JARS_PATH=$1
+        shift
+        ;;
+    --help)
+        show_help
+        ;;
+    start)
+        start_metastore
+        ;;
+    stop)
+        stop_metastore
+        ;;
+    restart)
+        stop_metastore
+        start_metastore
+        ;;
+    *)
+        show_help
+        ;;
+  esac
+done
+
+
+
+
