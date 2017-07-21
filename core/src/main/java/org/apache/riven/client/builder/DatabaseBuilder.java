@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -24,15 +24,11 @@ import org.apache.thrift.TException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DatabaseBuilder extends PrincipalPrivilegeSetBuilder<DatabaseBuilder> {
+public class DatabaseBuilder {
   private String name, description, location;
   private Map<String, String> params = new HashMap<>();
   private String ownerName; // optional
   private PrincipalType ownerType; // optional
-
-  public DatabaseBuilder() {
-    super.setChild(this);
-  }
 
   public DatabaseBuilder setName(String name) {
     this.name = name;
@@ -54,6 +50,11 @@ public class DatabaseBuilder extends PrincipalPrivilegeSetBuilder<DatabaseBuilde
     return this;
   }
 
+  public DatabaseBuilder addParam(String key, String value) {
+    params.put(key, value);
+    return this;
+  }
+
   public DatabaseBuilder setOwnerName(String ownerName) {
     this.ownerName = ownerName;
     return this;
@@ -69,7 +70,6 @@ public class DatabaseBuilder extends PrincipalPrivilegeSetBuilder<DatabaseBuilde
     Database db = new Database(name, description, location, params);
     if (ownerName != null) db.setOwnerName(ownerName);
     if (ownerType != null) db.setOwnerType(ownerType);
-    db.setPrivileges(buildPPS());
     return db;
   }
 }

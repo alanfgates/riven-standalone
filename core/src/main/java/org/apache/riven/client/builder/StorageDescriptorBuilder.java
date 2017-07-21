@@ -28,9 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// Having this  extend PrincipalPrivilegeSetBuilder isn't perfect as somethings (indexes) have
-// storage descriptors and not privilege sets.  But it's better than copying the code everywhere.
-abstract class StorageDescriptorBuilder<T> extends PrincipalPrivilegeSetBuilder<T> {
+abstract class StorageDescriptorBuilder<T> extends AbstractBuilder {
   private String location, inputFormat, outputFormat, serdeName, serdeLib;
   private List<FieldSchema> cols;
   private int numBuckets;
@@ -75,7 +73,6 @@ abstract class StorageDescriptorBuilder<T> extends PrincipalPrivilegeSetBuilder<
 
   protected void setChild(T child) {
     this.child = child;
-    super.setChild(child);
   }
 
   public T setLocation(String location) {

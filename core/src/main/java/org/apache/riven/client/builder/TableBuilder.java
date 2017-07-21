@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,8 +18,6 @@
 package org.apache.riven.client.builder;
 
 import org.apache.riven.api.FieldSchema;
-import org.apache.riven.api.Order;
-import org.apache.riven.api.PrincipalPrivilegeSet;
 import org.apache.riven.api.Table;
 
 import java.util.ArrayList;
@@ -130,7 +128,6 @@ public class TableBuilder extends StorageDescriptorBuilder<TableBuilder> {
         partCols, tableParams, viewOriginalText, viewExpandedText, type);
     if (rewriteEnabled) t.setRewriteEnabled(true);
     if (temporary) t.setTemporary(temporary);
-    t.setPrivileges(buildPPS());
     return t;
   }
 }

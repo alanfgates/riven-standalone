@@ -17,10 +17,7 @@
  */
 package org.apache.riven.client.builder;
 
-import org.apache.riven.api.FieldSchema;
-import org.apache.riven.api.Order;
 import org.apache.riven.api.Partition;
-import org.apache.riven.api.PrincipalPrivilegeSet;
 
 import java.util.HashMap;
 import java.util.List;
@@ -81,7 +78,6 @@ public class PartitionBuilder extends StorageDescriptorBuilder<PartitionBuilder>
     assert values != null : "values must be set";
     Partition p = new Partition(values, dbName, tableName, createTime, lastAccessTime, buildSd(),
         partParams);
-    p.setPrivileges(buildPPS());
     return p;
   }
 }

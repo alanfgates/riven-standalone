@@ -53,6 +53,7 @@
 
   <modules>
     <module>core</module>
+    <module>compat</module>
   </modules>
 
   <properties>

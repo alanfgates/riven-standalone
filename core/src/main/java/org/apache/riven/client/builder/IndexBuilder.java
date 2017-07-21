@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,12 +17,9 @@
  */
 package org.apache.riven.client.builder;
 
-import org.apache.riven.api.FieldSchema;
 import org.apache.riven.api.Index;
-import org.apache.riven.api.Order;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class IndexBuilder extends StorageDescriptorBuilder<IndexBuilder> {

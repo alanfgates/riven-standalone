@@ -25,12 +25,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-abstract class PrincipalPrivilegeSetBuilder<T> extends AbstractBuilder {
+abstract class PrincipalPrivilegeSetBuilder extends AbstractBuilder {
 
   private Map<String,List<PrivilegeGrantInfo>> userPrivileges; // required
   private Map<String,List<PrivilegeGrantInfo>> groupPrivileges; // required
   private Map<String,List<PrivilegeGrantInfo>> rolePrivileges; // required
-  private T child;
 
   public PrincipalPrivilegeSetBuilder() {
     userPrivileges = new HashMap<>();
@@ -38,59 +37,55 @@ abstract class PrincipalPrivilegeSetBuilder<T> extends AbstractBuilder {
     rolePrivileges = new HashMap<>();
   }
 
-  protected void setChild(T child) {
-    this.child = child;
-  }
-
-  public T setUserPrivileges(
+  public PrincipalPrivilegeSetBuilder setUserPrivileges(
       Map<String, List<PrivilegeGrantInfo>> userPrivileges) {
     this.userPrivileges = userPrivileges;
-    return child;
+    return this;
   }
 
-  public T addUserPrivilege(String user, PrivilegeGrantInfo privilege) {
+  public PrincipalPrivilegeSetBuilder addUserPrivilege(String user, PrivilegeGrantInfo privilege) {
     List<PrivilegeGrantInfo> pgis = userPrivileges.computeIfAbsent(user, k -> new ArrayList<>());
     pgis.add(privilege);
-    return child;
+    return this;
   }
 
-  public T addUserPrivilege(String user, PrivilegeGrantInfoBuilder builder) {
+  public PrincipalPrivilegeSetBuilder addUserPrivilege(String user, PrivilegeGrantInfoBuilder builder) {
     return addUserPrivilege(user, builder.build());
   }
 
-  public T setGroupPrivileges(
+  public PrincipalPrivilegeSetBuilder setGroupPrivileges(
       Map<String, List<PrivilegeGrantInfo>> groupPrivileges) {
     this.groupPrivileges = groupPrivileges;
-    return child;
+    return this;
   }
 
-  public T addGroupPrivilege(String group, PrivilegeGrantInfo privilege) {
+  public PrincipalPrivilegeSetBuilder addGroupPrivilege(String group, PrivilegeGrantInfo privilege) {
     List<PrivilegeGrantInfo> pgis = groupPrivileges.computeIfAbsent(group, k -> new ArrayList<>());
     pgis.add(privilege);
-    return child;
+    return this;
   }
 
-  public T addGroupPrivilege(String user, PrivilegeGrantInfoBuilder builder) {
+  public PrincipalPrivilegeSetBuilder addGroupPrivilege(String user, PrivilegeGrantInfoBuilder builder) {
     return addGroupPrivilege(user, builder.build());
   }
 
-  public T setRolePrivileges(
+  public PrincipalPrivilegeSetBuilder setRolePrivileges(
       Map<String, List<PrivilegeGrantInfo>> rolePrivileges) {
     this.rolePrivileges = rolePrivileges;
-    return child;
+    return this;
   }
 
-  public T addRolePrivilege(String role, PrivilegeGrantInfo privilege) {
+  public PrincipalPrivilegeSetBuilder addRolePrivilege(String role, PrivilegeGrantInfo privilege) {
     List<PrivilegeGrantInfo> pgis = rolePrivileges.computeIfAbsent(role, k -> new ArrayList<>());
     pgis.add(privilege);
-    return child;
+    return this;
   }
 
-  public T addRolePrivilege(String user, PrivilegeGrantInfoBuilder builder) {
+  public PrincipalPrivilegeSetBuilder addRolePrivilege(String user, PrivilegeGrantInfoBuilder builder) {
     return addRolePrivilege(user, builder.build());
   }
 
-  protected PrincipalPrivilegeSet buildPPS() {
+  protected PrincipalPrivilegeSet build() {
     if (userPrivileges.isEmpty() && groupPrivileges.isEmpty() && rolePrivileges.isEmpty()) {
       return null;
     }
