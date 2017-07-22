@@ -122,7 +122,9 @@ function start_metastore {
   # to initialize logging for all services
   export HADOOP_CLIENT_OPTS="$HADOOP_CLIENT_OPTS -Dlog4j.configurationFile=metastore-log4j2.properties "
 
-  $HADOOP jar $METASTORE_JAR org.apache.riven.impl.MetaStoreServer $@
+  $HADOOP jar $METASTORE_JAR org.apache.riven.impl.MetaStoreServer $@ &
+  echo $! > $PID_FILE
+  echo "Started metastore as process $!"
 }
 
 
@@ -149,7 +151,13 @@ if [[ -z $METASTORE_HOME ]] ; then
   export METASTORE_HOME=`dirname "$bin"`
 fi
 
-export PID_FILE=${METASTORE_HOME}/run/metastore.pid
+# make the run dir if we need it
+PID_DIR=${METASTORE_HOME}/run
+if [ ! -d ${METASTORE_DIR} ]
+then
+    mkdir ${METASTORE_DIR}
+fi
+export PID_FILE=${METASTORE_DIR}/metastore.pid
 
 # Parse the arguments
 while [ $# -gt 0 ]; do    # Until you run out of parameters . . .

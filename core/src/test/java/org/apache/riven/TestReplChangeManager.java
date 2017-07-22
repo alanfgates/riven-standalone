@@ -60,7 +60,10 @@ public class TestReplChangeManager {
 
   @BeforeClass
   public static void setUp() throws Exception {
-    m_dfs = new MiniDFSCluster.Builder(new Configuration()).numDataNodes(1).format(true).build();
+    Configuration miniDfsConf = new Configuration();
+    miniDfsConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR,
+        System.getProperty("test.tmp.dir") + "/minidfs");
+    m_dfs = new MiniDFSCluster.Builder(miniDfsConf).numDataNodes(1).format(true).build();
     conf = MetastoreConf.newMetastoreConf();
     MetastoreConf.setVar(conf, ConfVars.WAREHOUSE, "hdfs://" +
         m_dfs.getNameNode().getHostAndPort() + ConfVars.WAREHOUSE.defaultVal.toString());
