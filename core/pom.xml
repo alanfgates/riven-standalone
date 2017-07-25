@@ -182,15 +182,14 @@
       <artifactId>javolution</artifactId>
       <version>${javolution.version}</version>
     </dependency>
-
-    <!-- test scope dependencies -->
-
     <dependency>
       <groupId>org.apache.derby</groupId>
       <artifactId>derby</artifactId>
       <version>${derby.version}</version>
-      <scope>test</scope>
     </dependency>
+
+    <!-- test scope dependencies -->
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

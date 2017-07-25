@@ -18,13 +18,13 @@
 function show_help {
   echo "Usage: $0 [options] [start|stop|restart]"
   echo "options:"
-  echo "\t--config metastore_conf_directory"
-  echo "\t--auxpath path_to_auxiliary_jars"
+  echo "    --config metastore_conf_directory"
+  echo "    --auxpath path_to_auxiliary_jars"
   echo "Environment variables that affect execution:"
-  echo "\tMETASTORE_HOME - home for libraries and config files, parent of the directory this binary is in if not set"
-  echo "\tMETASTORE_CONF_DIR - directory for config files, METASTORE_HOME/conf if not set"
-  echo "\tMETASTORE_AUX_JARS_PATH - path to auxiliary jars to include when running the metastore"
-  echo "\tHADOOP_HOME - path to Hadoop"
+  echo "    METASTORE_HOME - home for libraries and config files, parent of the directory this binary is in if not set"
+  echo "    METASTORE_CONF_DIR - directory for config files, METASTORE_HOME/conf if not set"
+  echo "    METASTORE_AUX_JARS_PATH - path to auxiliary jars to include when running the metastore"
+  echo "    HADOOP_HOME - path to Hadoop"
 }
 
 function stop_metastore {
@@ -44,6 +44,9 @@ function stop_metastore {
 }
 
 function start_metastore {
+  # make the run dir if we need it
+  [ -d ${PID_DIR} ] || mkdir ${PID_DIR}
+
   # Allow alternate conf dir location.
   METASTORE_CONF_DIR="${METASTORE_CONF_DIR:-$METASTORE_HOME/conf}"
 
@@ -56,7 +59,7 @@ function start_metastore {
   CLASSPATH="${METASTORE_CONF_DIR}"
 
   METASTORE_LIB=${METASTORE_HOME}/lib
-  METASTORE_JAR=${METASTORE_LIB}/metastore-*.jar
+  METASTORE_JAR=${METASTORE_LIB}/riven-core-*.jar
 
   for f in ${METASTORE_LIB}/*.jar; do
     CLASSPATH=${CLASSPATH}:$f;
@@ -123,9 +126,15 @@ function start_metastore {
   export HADOOP_CLIENT_OPTS="$HADOOP_CLIENT_OPTS -Dlog4j.configurationFile=metastore-log4j2.properties "
 
   $HADOOP jar $METASTORE_JAR org.apache.riven.impl.MetaStoreServer $@ &
-  echo $! > $PID_FILE
-  echo "Started metastore as process $!"
+  # give it just a second
+  sleep 2
+  PID=`ps -ef | grep $$ | grep impl.MetaStoreServer | awk '{print $2}'`
+  echo $PID > $PID_FILE
+  echo "Started metastore as process $PID"
 }
+
+# Prevents surprising results repeating of directory names when changing directories
+unset CDPATH
 
 
 # Resolve a symbolic link to the real script
@@ -152,12 +161,8 @@ if [[ -z $METASTORE_HOME ]] ; then
 fi
 
 # make the run dir if we need it
-PID_DIR=${METASTORE_HOME}/run
-if [ ! -d ${METASTORE_DIR} ]
-then
-    mkdir ${METASTORE_DIR}
-fi
-export PID_FILE=${METASTORE_DIR}/metastore.pid
+export PID_DIR=${METASTORE_HOME}/run
+export PID_FILE=${PID_DIR}/metastore.pid
 
 # Parse the arguments
 while [ $# -gt 0 ]; do    # Until you run out of parameters . . .
@@ -175,19 +180,27 @@ while [ $# -gt 0 ]; do    # Until you run out of parameters . . .
         ;;
     --help)
         show_help
+        exit 0
         ;;
     start)
-        start_metastore
+        shift
+        start_metastore $@
+        exit 0
         ;;
     stop)
-        stop_metastore
+        shift
+        stop_metastore $@
+        exit 0
         ;;
     restart)
-        stop_metastore
-        start_metastore
+        shift
+        stop_metastore $@
+        start_metastore $@
+        exit 0
         ;;
     *)
         show_help
+        exit 0
         ;;
   esac
 done
