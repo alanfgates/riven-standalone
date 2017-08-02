@@ -318,9 +318,7 @@
             </goals>
             <configuration>
               <sources>
-                <!--<source>src/model</source>-->
                 <source>src/gen/thrift/gen-javabean</source>
-                <!--<source>src/gen/protobuf/gen-java</source>-->
               </sources>
             </configuration>
           </execution>

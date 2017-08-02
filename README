@@ -1,0 +1,3 @@
+This is a POC of pulling out Hive's metastore as a standalone project.  It is not intended to be the actual result of separation.  This is just to
+identify and work through issues encountered.  Not all Hive functionality is present in this POC.  The name Riven was used because it was the first
+suggested name for the project.
